@@ -16,23 +16,23 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Bucket parameter is required' }, { status: 400 });
     }
     
-    const matchesWithPredictions = await Match.find({
-        'prediction': { $exists: true },
-        'status': 'scheduled',
-        'matchDateUtc': { $gte: new Date() }
-    })
-    .populate({
-        path: 'prediction',
-        match: { bucket: bucket }
+    // 1. Find predictions that match the bucket
+    const predictions = await Prediction.find({ bucket: bucket }).select('matchId');
+    const matchIds = predictions.map(p => p.matchId);
+
+    // 2. Find upcoming matches that correspond to those predictions
+    const matches = await Match.find({
+      _id: { $in: matchIds },
+      status: 'scheduled',
+      matchDateUtc: { $gte: new Date() }
     })
     .populate('homeTeam')
     .populate('awayTeam')
+    .populate('prediction')
     .sort({ matchDateUtc: 1 })
     .limit(limit);
 
-    const filteredMatches = matchesWithPredictions.filter(m => m.prediction);
-
-    return NextResponse.json(filteredMatches);
+    return NextResponse.json(matches);
   } catch (error) {
     console.error(`Failed to fetch predictions for bucket ${request.url}:`, error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
