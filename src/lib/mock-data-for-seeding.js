@@ -1,7 +1,6 @@
 // This file is in JS because it's used by a node script.
 const upcomingMatches = [
   {
-    _id: '665b1d9e7f8a9b0e1c8d3b8e',
     source: 'footballjson',
     externalId: '1',
     leagueCode: 'PL',
@@ -19,7 +18,6 @@ const upcomingMatches = [
     tags: ['vip', 'big10'],
     lastUpdatedAt: new Date(),
     prediction: {
-      _id: 'pred_1',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.4,
@@ -39,7 +37,6 @@ const upcomingMatches = [
     },
   },
   {
-    _id: '665b1d9e7f8a9b0e1c8d3b8f',
     source: 'openligadb',
     externalId: '2',
     leagueCode: 'BL1',
@@ -57,7 +54,6 @@ const upcomingMatches = [
     tags: ['2odds', 'big10'],
     lastUpdatedAt: new Date(),
     prediction: {
-      _id: 'pred_2',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.4,
@@ -77,7 +73,6 @@ const upcomingMatches = [
     },
   },
   {
-    _id: '665b1d9e7f8a9b0e1c8d3b90',
     source: 'footballjson',
     externalId: '3',
     leagueCode: 'LIGA',
@@ -95,7 +90,6 @@ const upcomingMatches = [
     tags: ['5odds'],
     lastUpdatedAt: new Date(),
     prediction: {
-      _id: 'pred_3',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.4,
@@ -115,7 +109,6 @@ const upcomingMatches = [
     },
   },
     {
-    _id: '665b1d9e7f8a9b0e1c8d3b91',
     source: 'footballjson',
     externalId: '4',
     leagueCode: 'SERA',
@@ -133,7 +126,6 @@ const upcomingMatches = [
     tags: ['vip'],
     lastUpdatedAt: new Date(),
     prediction: {
-      _id: 'pred_4',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.5,
@@ -156,7 +148,6 @@ const upcomingMatches = [
 
 const finishedMatches = [
     {
-        _id: '665b1d9e7f8a9b0e1c8d3b92',
         source: 'footballjson',
         externalId: '5',
         leagueCode: 'PL',
@@ -169,7 +160,6 @@ const finishedMatches = [
         awayGoals: 0,
         lastUpdatedAt: new Date(),
         prediction: {
-            _id: 'pred_5',
             version: 'v1.0',
             features: { teamFormWeight: 0.4, h2hWeight: 0.3, homeAdvWeight: 0.2, goalsWeight: 0.1 },
             outcomes: { oneXTwo: { home: 0.5, draw: 0.3, away: 0.2 }, over15: 0.8, over25: 0.5, bttsYes: 0.4, correctScoreRange: '2-0/1-0' },
@@ -183,7 +173,6 @@ const finishedMatches = [
         }
     },
     {
-        _id: '665b1d9e7f8a9b0e1c8d3b93',
         source: 'openligadb',
         externalId: '6',
         leagueCode: 'BL1',
@@ -196,7 +185,6 @@ const finishedMatches = [
         awayGoals: 2,
         lastUpdatedAt: new Date(),
         prediction: {
-            _id: 'pred_6',
             version: 'v1.0',
             features: { teamFormWeight: 0.4, h2hWeight: 0.2, homeAdvWeight: 0.2, goalsWeight: 0.2 },
             outcomes: { oneXTwo: { home: 0.4, draw: 0.35, away: 0.25 }, over15: 0.9, over25: 0.7, bttsYes: 0.75, correctScoreRange: '2-1/1-1' },
