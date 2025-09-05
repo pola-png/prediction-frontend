@@ -15,6 +15,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { AppSidebar } from '@/components/app-sidebar';
 import type { Match } from '@/lib/types';
 import { MatchCard } from '@/components/match-card';
+import { getUpcomingMatches } from '@/services/sports-data-service';
+
 
 const predictionBuckets = [
   {
@@ -47,15 +49,6 @@ const predictionBuckets = [
   },
 ];
 
-async function getUpcomingMatches(): Promise<Match[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/matches/upcoming?limit=5`, { cache: 'no-store' });
-  if (!res.ok) {
-    console.error('Failed to fetch upcoming matches');
-    return [];
-  }
-  return res.json();
-}
-
 async function getBucketCounts() {
   const buckets = ['vip', '2odds', '5odds', 'big10'];
   const counts: Record<string, number> = {};
@@ -74,7 +67,7 @@ async function getBucketCounts() {
 
 
 export default async function HomePage() {
-  const upcomingMatches = await getUpcomingMatches();
+  const upcomingMatches = await getUpcomingMatches(5);
   const bucketCounts = await getBucketCounts();
 
   return (
@@ -114,7 +107,7 @@ export default async function HomePage() {
               <CardHeader className='flex flex-row items-center'>
                 <div className='grid gap-2'>
                   <CardTitle>Upcoming Matches</CardTitle>
-                  <CardDescription>Predictions for matches in the next 7 days.</CardDescription>
+                  <CardDescription>Live fixtures from around the world.</CardDescription>
                 </div>
                 <Button asChild size="sm" className="ml-auto gap-1">
                   <Link href="/predictions">
