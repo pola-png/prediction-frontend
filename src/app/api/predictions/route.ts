@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Match from '@/models/Match';
@@ -17,20 +18,27 @@ export async function GET(request: Request) {
 
     const predictions = await Prediction.find({ bucket })
       .sort({ createdAt: -1 })
-      .limit(limit);
+      .limit(limit)
+      .populate({
+        path: 'matchId',
+        populate: [
+          { path: 'homeTeam' },
+          { path: 'awayTeam' }
+        ]
+      });
       
-    const matchIds = predictions.map(p => p.matchId);
+    const matches = predictions.map(p => {
+        if (p.matchId) {
+            const match = (p.matchId as any).toObject();
+            match.prediction = p.toObject();
+            delete match.prediction.matchId;
+            return match;
+        }
+        return null;
+    }).filter(Boolean);
 
-    const matches = await Match.find({ _id: { $in: matchIds } })
-      .populate('homeTeam')
-      .populate('awayTeam')
-      .populate('prediction');
 
-    const matchesById = new Map(matches.map(m => [m._id.toString(), m]));
-    const sortedMatches = predictions.map(p => matchesById.get(p.matchId.toString())).filter(Boolean);
-
-
-    return NextResponse.json(sortedMatches);
+    return NextResponse.json(matches);
   } catch (error) {
     console.error(`Failed to fetch predictions for bucket ${request.url}:`, error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
