@@ -1,5 +1,7 @@
+
 'use client';
 
+import * as React from 'react';
 import type { Match } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +16,7 @@ function getPredictionSummary(match: Match) {
     const { home, away, draw } = match.prediction.outcomes.oneXTwo;
 
     if (home > away && home > draw) return `${match.homeTeam.name} to Win`;
-    if (away > home && away > draw) return `${match.awayTeam.name} to Win`;
+    if (away > home && away > draw) return `${matchawayTeam.name} to Win`;
     if (draw > home && draw > away) return 'Draw';
 
     const { over25, bttsYes } = match.prediction.outcomes;
@@ -45,10 +47,15 @@ const ResultIcon = ({ match }: { match: Match }) => {
 
 
 export function MatchCard({ match }: { match: Match }) {
+  const [formattedTime, setFormattedTime] = React.useState('');
   const matchDate = new Date(match.matchDateUtc);
   const summary = getPredictionSummary(match);
 
   const isFinished = match.status === 'finished';
+
+  React.useEffect(() => {
+    setFormattedTime(format(matchDate, 'HH:mm'));
+  }, [matchDate]);
 
   return (
     <div className="border rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4 hover:bg-card/60 transition-colors">
@@ -89,7 +96,7 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
         <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            <span>{format(matchDate, 'HH:mm')}</span>
+            <span>{formattedTime}</span>
         </div>
          <Badge variant="secondary">{match.leagueCode}</Badge>
       </div>
