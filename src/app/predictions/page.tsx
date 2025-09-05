@@ -2,7 +2,6 @@ import {
   SidebarProvider,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import {
   BarChart,
   Rocket,
@@ -10,11 +9,8 @@ import {
   Trophy,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { AppSidebar } from '@/components/app-sidebar';
-import type { Match } from '@/lib/types';
 
 
 const predictionBuckets = [
@@ -76,25 +72,6 @@ export default async function PredictionsPage() {
           <div className="w-full flex-1">
             <h1 className="font-semibold text-lg md:text-2xl">Prediction Buckets</h1>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full">
-                <Avatar className='h-8 w-8'>
-                  <AvatarImage src="https://picsum.photos/32/32" data-ai-hint="user avatar" />
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-                <span className="sr-only">Toggle user menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </header>
 
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">

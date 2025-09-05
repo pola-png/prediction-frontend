@@ -12,8 +12,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AppSidebar } from '@/components/app-sidebar';
 import type { Match } from '@/lib/types';
 import { MatchCard } from '@/components/match-card';
@@ -87,25 +85,6 @@ export default async function HomePage() {
           <div className="w-full flex-1">
             <h1 className="font-semibold text-lg md:text-2xl">Dashboard</h1>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full">
-                <Avatar className='h-8 w-8'>
-                  <AvatarImage src="https://picsum.photos/32/32" data-ai-hint="user avatar" />
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-                <span className="sr-only">Toggle user menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </header>
 
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
