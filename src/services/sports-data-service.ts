@@ -6,7 +6,7 @@ import TeamModel from '@/models/Team';
 import dbConnect from '@/lib/mongodb';
 
 
-const API_KEY = process.env.THESPORTSDB_API_KEY || '1';
+const API_KEY = process.env.THESPORTSDB_API_KEY;
 const BASE_URL = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
 
 // A list of popular league IDs from TheSportsDB
@@ -95,6 +95,9 @@ async function transformEventToMatch(event: TheSportsDBEvent): Promise<Match> {
 
 export async function getUpcomingMatches(limit = 10): Promise<Match[]> {
     try {
+        if (!API_KEY) {
+            throw new Error("TheSportsDB API key is not configured.");
+        }
         let allEvents: TheSportsDBEvent[] = [];
 
         for (const leagueId of POPULAR_LEAGUE_IDS) {
