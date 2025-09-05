@@ -1,0 +1,70 @@
+'use client';
+
+import {
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar';
+import { Football, Home, ShieldCheck, Rocket, BarChart, Trophy, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Button } from './ui/button';
+
+const menuItems = [
+  { href: '/', label: 'Dashboard', icon: Home },
+  { href: '#', label: 'VIP', icon: ShieldCheck },
+  { href: '#', label: '2 Odds', icon: Rocket },
+  { href: '#', label: '5 Odds', icon: BarChart },
+  { href: '#', label: 'Big 10+', icon: Trophy },
+];
+
+export function AppSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="text-primary hover:bg-transparent" asChild>
+            <Link href="/" aria-label="Home">
+              <Football className="w-6 h-6" />
+            </Link>
+          </Button>
+          <h1 className="text-xl font-semibold text-foreground">GoalGazer</h1>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.label}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={{ children: item.label }}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{ children: 'Settings' }}>
+              <Settings />
+              <span>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
