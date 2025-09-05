@@ -10,6 +10,4 @@ const TeamSchema = new Schema<ITeam>({
   logoUrl: { type: String, required: true },
 }, { timestamps: true });
 
-const Team = mongoose.models.Team || mongoose.model<ITeam>('Team', TeamSchema);
-
-export default Team;
+module.exports = mongoose.models.Team || mongoose.model<ITeam>('Team', TeamSchema);

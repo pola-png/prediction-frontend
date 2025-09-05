@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
-import type { Team } from './Team';
-import type { Prediction } from './Prediction';
+import type { ITeam } from './Team';
+import type { IPrediction } from './Prediction';
 
 export interface IMatch extends Document {
   _id: Types.ObjectId;
@@ -10,15 +10,15 @@ export interface IMatch extends Document {
   season: string;
   matchDateUtc: Date;
   status: 'scheduled' | 'in-progress' | 'finished' | 'postponed' | 'canceled';
-  homeTeam: Types.ObjectId | Team;
-  awayTeam: Types.ObjectId | Team;
+  homeTeam: Types.ObjectId | ITeam;
+  awayTeam: Types.ObjectId | ITeam;
   homeGoals?: number;
   awayGoals?: number;
   tags?: ('2odds' | '5odds' | 'vip' | 'big10')[];
   lastUpdatedAt: Date;
   createdAt: Date;
   updatedAt: Date;
-  prediction?: Types.ObjectId | Prediction;
+  prediction?: Types.ObjectId | IPrediction;
 }
 
 const MatchSchema = new Schema<IMatch>({
@@ -40,6 +40,4 @@ const MatchSchema = new Schema<IMatch>({
 MatchSchema.index({ source: 1, externalId: 1 }, { unique: true });
 MatchSchema.index({ matchDateUtc: -1, leagueCode: 1, status: 1 });
 
-const Match = mongoose.models.Match || mongoose.model<IMatch>('Match', MatchSchema);
-
-export default Match;
+module.exports = mongoose.models.Match || mongoose.model<IMatch>('Match', MatchSchema);

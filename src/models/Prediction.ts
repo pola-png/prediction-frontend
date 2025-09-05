@@ -51,6 +51,4 @@ const PredictionSchema = new Schema<IPrediction>({
 
 PredictionSchema.index({ matchId: 1 }, { unique: true });
 
-const Prediction = mongoose.models.Prediction || mongoose.model<IPrediction>('Prediction', PredictionSchema);
-
-export default Prediction;
+module.exports = mongoose.models.Prediction || mongoose.model<IPrediction>('Prediction', PredictionSchema);
