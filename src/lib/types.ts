@@ -1,22 +1,7 @@
 export interface Team {
-  _id: string;
-  source: 'footballjson' | 'openligadb' | 'manual';
-  externalId?: string;
+  id?: string;
   name: string;
-  shortName?: string;
-  country?: string;
-  leagueCode?: string;
-  season?: string;
-  logoUrl?: string;
-  stats?: {
-    formLast5?: { date: Date; opp: string; gf: number; ga: number; result: 'W' | 'D' | 'L' }[];
-    avgGF?: number;
-    avgGA?: number;
-    homeStrength?: number;
-    awayStrength?: number;
-  };
-  createdAt: Date;
-  updatedAt: Date;
+  logoUrl: string;
 }
 
 export interface Match {
@@ -27,8 +12,8 @@ export interface Match {
   season: string;
   matchDateUtc: Date;
   status: 'scheduled' | 'in-progress' | 'finished' | 'postponed' | 'canceled';
-  homeTeam: { id?: string; name: string, logoUrl: string };
-  awayTeam: { id?: string; name: string, logoUrl: string };
+  homeTeam: Team;
+  awayTeam: Team;
   homeGoals?: number;
   awayGoals?: number;
   tags?: ('2odds' | '5odds' | 'vip' | 'big10')[];
@@ -60,28 +45,4 @@ export interface Prediction {
   bucket: '2odds' | '5odds' | 'vip' | 'big10';
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface History {
-  _id: string;
-  matchId: string;
-  predictionId: string;
-  resolvedAt?: Date;
-  result: {
-    homeGoals?: number;
-    awayGoals?: number;
-    outcome?: 'home' | 'draw' | 'away';
-    over15?: boolean;
-    over25?: boolean;
-    bttsYes?: boolean;
-    correctScoreBucket?: string;
-  };
-  correctness: {
-    oneXTwo?: boolean;
-    over15?: boolean;
-    over25?: boolean;
-    bttsYes?: boolean;
-    correctScoreRange?: boolean;
-  };
-  createdAt: Date;
 }

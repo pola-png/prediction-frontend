@@ -15,7 +15,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AppSidebar } from '@/components/app-sidebar';
-import { upcomingMatches } from '@/lib/mock-data';
+import type { Match } from '@/lib/types';
 import { MatchCard } from '@/components/match-card';
 
 const predictionBuckets = [
@@ -23,33 +23,59 @@ const predictionBuckets = [
     title: 'VIP Predictions',
     description: 'High confidence, conservative picks.',
     icon: ShieldCheck,
-    href: '#',
-    count: 3,
+    href: '/predictions/vip',
+    bucket: 'vip'
   },
   {
     title: '2 Odds Picks',
     description: 'Curated small accumulators.',
     icon: Rocket,
-    href: '#',
-    count: 5,
+    href: '/predictions/2odds',
+     bucket: '2odds'
   },
   {
     title: '5 Odds Picks',
     description: 'Medium risk accumulator targets.',
     icon: BarChart,
-    href: '#',
-    count: 2,
+    href: '/predictions/5odds',
+     bucket: '5odds'
   },
   {
     title: 'Big 10+ Odds',
     description: 'Higher-risk aggregate selections.',
     icon: Trophy,
-    href: '#',
-    count: 1,
+    href: '/predictions/big10',
+     bucket: 'big10'
   },
 ];
 
-export default function HomePage() {
+async function getUpcomingMatches(): Promise<Match[]> {
+  // In a real app, you'd fetch this from the API
+  const { upcomingMatches } = await import('@/lib/mock-data');
+  return upcomingMatches;
+}
+
+async function getBucketCounts() {
+    const { upcomingMatches } = await import('@/lib/mock-data');
+    const counts = {
+        vip: 0,
+        '2odds': 0,
+        '5odds': 0,
+        big10: 0,
+    };
+    for (const match of upcomingMatches) {
+        if (match.prediction) {
+            counts[match.prediction.bucket]++;
+        }
+    }
+    return counts;
+}
+
+
+export default async function HomePage() {
+  const upcomingMatches = await getUpcomingMatches();
+  const bucketCounts = await getBucketCounts();
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -82,7 +108,8 @@ export default function HomePage() {
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
           <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
             {predictionBuckets.map((bucket) => (
-              <Card key={bucket.title}>
+              <Link href={bucket.href} key={bucket.title}>
+              <Card >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     {bucket.title}
@@ -90,12 +117,13 @@ export default function HomePage() {
                   <bucket.icon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{bucket.count} Active</div>
+                  <div className="text-2xl font-bold">{bucketCounts[bucket.bucket as keyof typeof bucketCounts]} Active</div>
                   <p className="text-xs text-muted-foreground">
                     {bucket.description}
                   </p>
                 </CardContent>
               </Card>
+              </Link>
             ))}
           </div>
           
@@ -107,14 +135,14 @@ export default function HomePage() {
                   <CardDescription>Predictions for matches in the next 7 days.</CardDescription>
                 </div>
                 <Button asChild size="sm" className="ml-auto gap-1">
-                  <Link href="#">
+                  <Link href="/predictions">
                     View All
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 </Button>
               </CardHeader>
               <CardContent className='space-y-4'>
-                {upcomingMatches.map((match) => (
+                {upcomingMatches.slice(0, 5).map((match) => (
                    <MatchCard key={match._id} match={match} />
                 ))}
               </CardContent>

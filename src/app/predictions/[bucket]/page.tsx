@@ -4,9 +4,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLab
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { upcomingMatches } from '@/lib/mock-data';
 import { MatchCard } from '@/components/match-card';
-import { Badge } from '@/components/ui/badge';
 import type { Match } from '@/lib/types';
 
 const bucketDetails: Record<string, { title: string, description: string }> = {
@@ -16,12 +14,17 @@ const bucketDetails: Record<string, { title: string, description: string }> = {
     'big10': { title: 'Big 10+ Odds', description: 'Higher-risk aggregate selections with total odds over 10.0.' },
 }
 
+async function getMatchesByBucket(bucket: string): Promise<Match[]> {
+    const { upcomingMatches } = await import('@/lib/mock-data');
+    return upcomingMatches.filter(match => match.prediction?.bucket === bucket);
+}
 
-export default function BucketPage({ params }: { params: { bucket: string } }) {
+
+export default async function BucketPage({ params }: { params: { bucket: string } }) {
   const { bucket } = params;
   const details = bucketDetails[bucket] || { title: 'Predictions', description: 'Browse predictions by category.' };
   
-  const filteredMatches = upcomingMatches.filter(match => match.prediction?.bucket === bucket);
+  const filteredMatches = await getMatchesByBucket(bucket);
 
   return (
     <SidebarProvider>

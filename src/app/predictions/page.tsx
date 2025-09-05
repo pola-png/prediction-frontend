@@ -4,7 +4,6 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowUpRight,
   BarChart,
   Rocket,
   ShieldCheck,
@@ -15,7 +14,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AppSidebar } from '@/components/app-sidebar';
-import { upcomingMatches } from '@/lib/mock-data';
+import type { Match } from '@/lib/types';
+
 
 const predictionBuckets = [
   {
@@ -48,10 +48,25 @@ const predictionBuckets = [
   },
 ];
 
-export default function PredictionsPage() {
-  const getBucketCount = (bucket: string) => {
-    return upcomingMatches.filter(match => match.prediction?.bucket === bucket).length;
-  }
+async function getBucketCounts() {
+    const { upcomingMatches } = await import('@/lib/mock-data');
+    const counts: Record<string, number> = {
+        vip: 0,
+        '2odds': 0,
+        '5odds': 0,
+        big10: 0,
+    };
+    for (const match of upcomingMatches) {
+        if (match.prediction) {
+            counts[match.prediction.bucket]++;
+        }
+    }
+    return counts;
+}
+
+
+export default async function PredictionsPage() {
+  const bucketCounts = await getBucketCounts();
 
   return (
     <SidebarProvider>
@@ -94,7 +109,7 @@ export default function PredictionsPage() {
                     <bucket.icon className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{getBucketCount(bucket.bucket)} Active</div>
+                    <div className="text-2xl font-bold">{bucketCounts[bucket.bucket]} Active</div>
                     <p className="text-xs text-muted-foreground">
                       {bucket.description}
                     </p>
