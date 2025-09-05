@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const PredictionModel = Prediction;
     const HistoryModel = History;
 
+    const teams = await TeamModel.find();
     const matches = await MatchModel.find()
       .populate('homeTeam')
       .populate('awayTeam')
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
 
     const predictions = await PredictionModel.find().populate('matchId');
 
-    const teams = await TeamModel.find();
+    
     const histories = await HistoryModel.find();
 
 
