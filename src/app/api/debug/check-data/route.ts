@@ -10,14 +10,16 @@ export async function GET(request: Request) {
     await dbConnect();
 
     // To ensure models are registered
-    await Team.find({}).limit(1);
+    const TeamModel = Team;
+    const MatchModel = Match;
+    const PredictionModel = Prediction;
 
-    const matches = await Match.find()
+    const matches = await MatchModel.find()
       .populate('homeTeam')
       .populate('awayTeam')
       .populate('prediction');
 
-    const predictions = await Prediction.find().populate('matchId');
+    const predictions = await PredictionModel.find().populate('matchId');
 
     return NextResponse.json({ 
         message: "Data check complete. See the data below.",

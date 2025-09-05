@@ -1,3 +1,4 @@
+
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ITeam extends Document {
@@ -10,4 +11,4 @@ const TeamSchema = new Schema<ITeam>({
   logoUrl: { type: String, required: true },
 }, { timestamps: true });
 
-module.exports = mongoose.models.Team || mongoose.model<ITeam>('Team', TeamSchema);
+export default mongoose.models.Team || mongoose.model<ITeam>('Team', TeamSchema);

@@ -1,3 +1,4 @@
+
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface IPrediction extends Document {
@@ -51,4 +52,4 @@ const PredictionSchema = new Schema<IPrediction>({
 
 PredictionSchema.index({ matchId: 1 }, { unique: true });
 
-module.exports = mongoose.models.Prediction || mongoose.model<IPrediction>('Prediction', PredictionSchema);
+export default mongoose.models.Prediction || mongoose.model<IPrediction>('Prediction', PredictionSchema);
