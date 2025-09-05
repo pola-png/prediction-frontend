@@ -132,14 +132,14 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
               <div className="space-y-4">
                 <h4 className="font-medium text-center text-sm uppercase text-muted-foreground">Goals</h4>
                 <div className="space-y-3">
-                   {over05 && <ProbabilityBar label="Over 0.5" value={over05} />}
+                   {typeof over05 === 'number' && <ProbabilityBar label="Over 0.5" value={over05} />}
                    <ProbabilityBar label="Over 1.5" value={over15} />
                    <ProbabilityBar label="Over 2.5" value={over25} />
                 </div>
                  <Separator />
                  <div className="space-y-3">
                    <ProbabilityBar label="Both Teams to Score (Yes)" value={bttsYes} />
-                   {bttsNo && <ProbabilityBar label="Both Teams to Score (No)" value={bttsNo} />}
+                   {typeof bttsNo === 'number' && <ProbabilityBar label="Both Teams to Score (No)" value={bttsNo} />}
                  </div>
               </div>
 
@@ -154,10 +154,13 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
                     <Separator />
                   </>
                 )}
-                 {halfTimeDraw && (
+                 {typeof halfTimeDraw === 'number' && (
+                   <>
                     <div className="space-y-3">
                         <ProbabilityBar label="Draw at Half Time" value={halfTimeDraw} />
                     </div>
+                    <Separator />
+                   </>
                  )}
                  <div className="pt-2 text-center">
                     <div className="text-sm text-muted-foreground">Correct Score Range</div>
