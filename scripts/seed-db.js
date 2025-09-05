@@ -1,9 +1,9 @@
+
 require('dotenv').config({ path: '.env' });
 const mongoose = require('mongoose');
-const path = require('path');
 const { upcomingMatches, finishedMatches } = require('../src/lib/mock-data-for-seeding');
 
-// Correctly handle module exports for JS/TS interop by resolving paths
+// Correctly handle module exports for JS/TS interop by accessing the .default property
 const Team = require('../src/models/Team').default;
 const Match = require('../src/models/Match').default;
 const Prediction = require('../src/models/Prediction').default;
