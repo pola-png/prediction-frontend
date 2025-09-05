@@ -25,12 +25,23 @@ export async function GET(request: Request) {
         path: 'matchId',
         populate: [
           { path: 'homeTeam' },
-          { path: 'awayTeam' }
+          { path: 'awayTeam' },
         ]
       })
-      .populate('predictionId');
+      .populate({
+        path: 'predictionId'
+      });
 
-    return NextResponse.json(recentResults);
+      const transformedResults = recentResults.map(history => {
+        const match = history.matchId.toObject();
+        match.prediction = history.predictionId.toObject();
+        match.homeGoals = history.result.homeGoals;
+        match.awayGoals = history.result.awayGoals;
+        match.status = 'finished';
+        return match;
+      });
+
+    return NextResponse.json(transformedResults);
   } catch (error) {
     console.error('Failed to fetch recent results:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
