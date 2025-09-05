@@ -1,4 +1,3 @@
-
 // src/services/sports-data-service.ts
 import type { Match, Team } from '@/lib/types';
 import MatchModel from '@/models/Match';
@@ -6,16 +5,29 @@ import TeamModel from '@/models/Team';
 import dbConnect from '@/lib/mongodb';
 
 
-const API_KEY = '1'; // TheSportsDB free API key
-const BASE_URL = `https://www.thesportsdb.com/api/v1/json/${API_KEY}`;
+const BASE_URL = 'https://www.thesportsdb.com/api/v1/json/1';
 
 // A list of popular league IDs from TheSportsDB
-const POPULAR_LEAGUE_IDS = [
+const LEAGUE_IDS = [
     '4328', // English Premier League
     '4335', // Spanish La Liga
     '4331', // German Bundesliga
     '4332', // Italian Serie A
     '4334', // French Ligue 1
+    '4344', // Dutch Eredivisie
+    '4346', // Portuguese Primeira Liga
+    '4330', // Brazilian Serie A
+    '4350', // Argentine Liga Profesional
+    '4356', // USA MLS
+    '4337', // English Championship
+    '4394', // Mexican Liga MX
+    '4329', // Scottish Premiership
+    '4338', // Belgian Pro League
+    '4340', // Turkish Super Lig
+    '4339', // Greek Super League
+    '4722', // Japanese J1 League
+    '4655', // South Korean K League 1
+    '4351', // Australian A-League
 ];
 
 interface TheSportsDBEvent {
@@ -97,7 +109,7 @@ export async function getUpcomingMatches(limit = 10): Promise<Match[]> {
     try {
         let allEvents: TheSportsDBEvent[] = [];
 
-        for (const leagueId of POPULAR_LEAGUE_IDS) {
+        for (const leagueId of LEAGUE_IDS) {
             const response = await fetch(`${BASE_URL}/eventsnextleague.php?id=${leagueId}`);
             if (!response.ok) {
                 console.warn(`Failed to fetch upcoming matches for league ${leagueId}. Status: ${response.status}`);

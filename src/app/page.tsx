@@ -67,7 +67,7 @@ async function getBucketCounts() {
 
 
 export default async function HomePage() {
-  const upcomingMatches = await getUpcomingMatches(5);
+  const upcomingMatches = await getUpcomingMatches(15);
   const bucketCounts = await getBucketCounts();
 
   return (
@@ -117,7 +117,7 @@ export default async function HomePage() {
                 </Button>
               </CardHeader>
               <CardContent className='space-y-4'>
-                {upcomingMatches.slice(0, 5).map((match) => (
+                {upcomingMatches.slice(0, 15).map((match) => (
                    <MatchCard key={match._id} match={match} />
                 ))}
               </CardContent>
