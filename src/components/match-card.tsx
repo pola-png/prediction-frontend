@@ -4,7 +4,7 @@ import type { Match } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, CheckCircle2, XCircle, MinusCircle } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { PredictionDetailsDialog } from './prediction-details-dialog';
 
@@ -25,7 +25,8 @@ function getPredictionSummary(match: Match) {
 }
 
 const ResultIcon = ({ match }: { match: Match }) => {
-    if (!match.prediction) return null;
+    if (!match.prediction || match.status !== 'finished') return null;
+
     const { home, away } = match.prediction.outcomes.oneXTwo;
     
     let predictedOutcome: 'home' | 'away' | 'draw' = 'draw';

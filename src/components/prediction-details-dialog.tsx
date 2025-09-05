@@ -25,13 +25,20 @@ interface PredictionDetailsDialogProps {
 }
 
 const ProbabilityBar = ({ label, value, variant }: { label: string; value: number; variant: 'home' | 'draw' | 'away' }) => {
+  const barColor =
+    variant === 'home'
+      ? 'bg-blue-500'
+      : variant === 'draw'
+      ? 'bg-yellow-500'
+      : 'bg-red-500';
+
   return (
     <div className="w-full">
       <div className="flex justify-between mb-1">
         <span className="text-sm font-medium">{label}</span>
         <span className="text-sm font-medium">{(value * 100).toFixed(0)}%</span>
       </div>
-      <Progress value={value * 100} className="h-2" />
+      <Progress value={value * 100} className="h-2 [&>div]:bg-primary" />
     </div>
   );
 };
@@ -82,34 +89,34 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-4">
+          <DialogTitle className="flex items-center justify-center gap-4">
              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
+                <Avatar className="h-8 w-8">
                     <AvatarImage src={match.homeTeam.logoUrl} alt={match.homeTeam.name} data-ai-hint="team logo" />
                     <AvatarFallback>{match.homeTeam.name.substring(0,1)}</AvatarFallback>
                 </Avatar>
-                <span>{match.homeTeam.name}</span>
+                <span className='text-lg font-semibold'>{match.homeTeam.name}</span>
              </div>
               {match.status === 'finished' ? (
                 <span className='font-bold text-2xl'>{match.homeGoals} - {match.awayGoals}</span>
               ) : (
-                <span className='text-muted-foreground'>vs</span>
+                <span className='text-muted-foreground text-xl'>vs</span>
               )}
              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
+                 <span className='text-lg font-semibold'>{match.awayTeam.name}</span>
+                <Avatar className="h-8 w-8">
                     <AvatarImage src={match.awayTeam.logoUrl} alt={match.awayTeam.name} data-ai-hint="team logo" />
                     <AvatarFallback>{match.awayTeam.name.substring(0,1)}</AvatarFallback>
                 </Avatar>
-                <span>{match.awayTeam.name}</span>
              </div>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className='text-center'>
             {match.leagueCode} - {new Date(match.matchDateUtc).toLocaleString()}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
             <div className="space-y-2">
-                <h4 className="font-medium">Match Outcome (1X2)</h4>
+                <h4 className="font-medium text-center">Match Outcome (1X2)</h4>
                 <div className='flex gap-4'>
                     <ProbabilityBar label="Home Win" value={match.prediction.outcomes.oneXTwo.home} variant="home" />
                     <ProbabilityBar label="Draw" value={match.prediction.outcomes.oneXTwo.draw} variant="draw" />
