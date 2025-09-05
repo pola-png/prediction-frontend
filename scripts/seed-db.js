@@ -2,10 +2,11 @@ require('dotenv').config({ path: '.env' });
 const mongoose = require('mongoose');
 const { upcomingMatches, finishedMatches } = require('../src/lib/mock-data-for-seeding');
 
-const Team = require('../src/models/Team').default;
-const Match = require('../src/models/Match').default;
-const Prediction = require('../src/models/Prediction').default;
-const History = require('../src/models/History').default;
+// Correctly handle module exports for JS/TS interop
+const Team = require('../src/models/Team').default || require('../src/models/Team');
+const Match = require('../src/models/Match').default || require('../src/models/Match');
+const Prediction = require('../src/models/Prediction').default || require('../src/models/Prediction');
+const History = require('../src/models/History').default || require('../src/models/History');
 
 
 async function seedDB() {
