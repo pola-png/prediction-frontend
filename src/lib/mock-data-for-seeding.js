@@ -1,3 +1,4 @@
+
 // This file is in JS because it's used by a node script.
 const upcomingMatches = [
   {
@@ -19,18 +20,17 @@ const upcomingMatches = [
     lastUpdatedAt: new Date(),
     prediction: {
       version: 'v1.0',
-      features: {
-        teamFormWeight: 0.4,
-        h2hWeight: 0.2,
-        homeAdvWeight: 0.2,
-        goalsWeight: 0.2,
-      },
+      features: { teamFormWeight: 0.4, h2hWeight: 0.2, homeAdvWeight: 0.2, goalsWeight: 0.2 },
       outcomes: {
         oneXTwo: { home: 0.4, draw: 0.3, away: 0.3 },
+        doubleChance: { homeOrDraw: 0.7, homeOrAway: 0.7, drawOrAway: 0.6 },
+        over05: 0.95,
         over15: 0.8,
         over25: 0.6,
         bttsYes: 0.7,
+        bttsNo: 0.3,
         correctScoreRange: '1-1/2-1',
+        halfTimeDraw: 0.45,
       },
       confidence: 88,
       bucket: 'vip',
@@ -55,18 +55,17 @@ const upcomingMatches = [
     lastUpdatedAt: new Date(),
     prediction: {
       version: 'v1.0',
-      features: {
-        teamFormWeight: 0.4,
-        h2hWeight: 0.2,
-        homeAdvWeight: 0.2,
-        goalsWeight: 0.2,
-      },
+      features: { teamFormWeight: 0.4, h2hWeight: 0.2, homeAdvWeight: 0.2, goalsWeight: 0.2 },
       outcomes: {
         oneXTwo: { home: 0.6, draw: 0.2, away: 0.2 },
+        doubleChance: { homeOrDraw: 0.8, homeOrAway: 0.8, drawOrAway: 0.4 },
+        over05: 0.98,
         over15: 0.9,
         over25: 0.75,
         bttsYes: 0.65,
+        bttsNo: 0.35,
         correctScoreRange: '2-0/3-1',
+        halfTimeDraw: 0.3,
       },
       confidence: 92,
       bucket: '2odds',
@@ -91,18 +90,17 @@ const upcomingMatches = [
     lastUpdatedAt: new Date(),
     prediction: {
       version: 'v1.0',
-      features: {
-        teamFormWeight: 0.4,
-        h2hWeight: 0.2,
-        homeAdvWeight: 0.2,
-        goalsWeight: 0.2,
-      },
+      features: { teamFormWeight: 0.4, h2hWeight: 0.2, homeAdvWeight: 0.2, goalsWeight: 0.2 },
       outcomes: {
         oneXTwo: { home: 0.45, draw: 0.25, away: 0.3 },
+        doubleChance: { homeOrDraw: 0.7, homeOrAway: 0.75, drawOrAway: 0.55 },
+        over05: 0.96,
         over15: 0.85,
         over25: 0.65,
         bttsYes: 0.8,
+        bttsNo: 0.2,
         correctScoreRange: '2-1/2-2',
+        halfTimeDraw: 0.4,
       },
       confidence: 85,
       bucket: '5odds',
@@ -127,18 +125,17 @@ const upcomingMatches = [
     lastUpdatedAt: new Date(),
     prediction: {
       version: 'v1.0',
-      features: {
-        teamFormWeight: 0.5,
-        h2hWeight: 0.1,
-        homeAdvWeight: 0.2,
-        goalsWeight: 0.2,
-      },
+      features: { teamFormWeight: 0.5, h2hWeight: 0.1, homeAdvWeight: 0.2, goalsWeight: 0.2 },
       outcomes: {
         oneXTwo: { home: 0.3, draw: 0.4, away: 0.3 },
+        doubleChance: { homeOrDraw: 0.7, homeOrAway: 0.6, drawOrAway: 0.7 },
+        over05: 0.9,
         over15: 0.7,
         over25: 0.4,
         bttsYes: 0.5,
+        bttsNo: 0.5,
         correctScoreRange: '1-1/0-0',
+        halfTimeDraw: 0.6,
       },
       confidence: 80,
       bucket: 'vip',
@@ -162,7 +159,17 @@ const finishedMatches = [
         prediction: {
             version: 'v1.0',
             features: { teamFormWeight: 0.4, h2hWeight: 0.3, homeAdvWeight: 0.2, goalsWeight: 0.1 },
-            outcomes: { oneXTwo: { home: 0.5, draw: 0.3, away: 0.2 }, over15: 0.8, over25: 0.5, bttsYes: 0.4, correctScoreRange: '2-0/1-0' },
+            outcomes: {
+              oneXTwo: { home: 0.5, draw: 0.3, away: 0.2 },
+              doubleChance: { homeOrDraw: 0.8, homeOrAway: 0.7, drawOrAway: 0.5 },
+              over05: 0.95,
+              over15: 0.8,
+              over25: 0.5,
+              bttsYes: 0.4,
+              bttsNo: 0.6,
+              correctScoreRange: '2-0/1-0',
+              halfTimeDraw: 0.4,
+            },
             confidence: 85,
             bucket: 'vip',
         },
@@ -187,7 +194,17 @@ const finishedMatches = [
         prediction: {
             version: 'v1.0',
             features: { teamFormWeight: 0.4, h2hWeight: 0.2, homeAdvWeight: 0.2, goalsWeight: 0.2 },
-            outcomes: { oneXTwo: { home: 0.4, draw: 0.35, away: 0.25 }, over15: 0.9, over25: 0.7, bttsYes: 0.75, correctScoreRange: '2-1/1-1' },
+            outcomes: {
+              oneXTwo: { home: 0.4, draw: 0.35, away: 0.25 },
+              doubleChance: { homeOrDraw: 0.75, homeOrAway: 0.65, drawOrAway: 0.6 },
+              over05: 0.98,
+              over15: 0.9,
+              over25: 0.7,
+              bttsYes: 0.75,
+              bttsNo: 0.25,
+              correctScoreRange: '2-1/1-1',
+              halfTimeDraw: 0.35,
+            },
             confidence: 90,
             bucket: 'big10',
         },

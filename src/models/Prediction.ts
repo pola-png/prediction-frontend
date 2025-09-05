@@ -14,10 +14,14 @@ export interface IPrediction extends Document {
   };
   outcomes: {
     oneXTwo: { home: number; draw: number; away: number };
+    doubleChance: { homeOrDraw: number; homeOrAway: number; drawOrAway: number };
+    over05: number;
     over15: number;
     over25: number;
     bttsYes: number;
+    bttsNo: number;
     correctScoreRange: string;
+    halfTimeDraw: number;
   };
   confidence: number;
   bucket: '2odds' | '5odds' | 'vip' | 'big10';
@@ -41,10 +45,18 @@ const PredictionSchema = new Schema<IPrediction>({
       draw: { type: Number, required: true },
       away: { type: Number, required: true },
     },
+    doubleChance: {
+      homeOrDraw: { type: Number, required: true },
+      homeOrAway: { type: Number, required: true },
+      drawOrAway: { type: Number, required: true },
+    },
+    over05: { type: Number, required: true },
     over15: { type: Number, required: true },
     over25: { type: Number, required: true },
     bttsYes: { type: Number, required: true },
+    bttsNo: { type: Number, required: true },
     correctScoreRange: { type: String, required: true },
+    halfTimeDraw: { type: Number, required: true },
   },
   confidence: { type: Number, required: true },
   bucket: { type: String, enum: ['2odds', '5odds', 'vip', 'big10'], required: true },

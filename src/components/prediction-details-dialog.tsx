@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from 'react';
@@ -17,31 +18,31 @@ import { Progress } from './ui/progress';
 import { getMatchSummary } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Terminal } from 'lucide-react';
+import { Separator } from './ui/separator';
+import { Terminal, ShieldQuestion } from 'lucide-react';
 
 interface PredictionDetailsDialogProps {
   match: Match;
   children: ReactNode;
 }
 
-const ProbabilityBar = ({ label, value, variant }: { label: string; value: number; variant: 'home' | 'draw' | 'away' }) => {
-  const barColor =
-    variant === 'home'
-      ? 'bg-blue-500'
-      : variant === 'draw'
-      ? 'bg-yellow-500'
-      : 'bg-red-500';
-
-  return (
+const ProbabilityBar = ({ label, value, variant }: { label: string; value: number; variant?: 'default' | 'primary' }) => (
     <div className="w-full">
       <div className="flex justify-between mb-1">
-        <span className="text-sm font-medium">{label}</span>
-        <span className="text-sm font-medium">{(value * 100).toFixed(0)}%</span>
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        <span className="text-sm font-semibold">{(value * 100).toFixed(0)}%</span>
       </div>
-      <Progress value={value * 100} className="h-2 [&>div]:bg-primary" />
+      <Progress value={value * 100} className="h-2" />
     </div>
-  );
-};
+);
+
+
+const PredictionGridItem = ({ title, value }: { title: string; value: string }) => (
+  <div className='flex flex-col items-center justify-center p-4 border rounded-lg bg-muted/50 text-center'>
+      <div className='text-3xl font-bold'>{value}</div>
+      <div className='text-sm text-muted-foreground'>{title}</div>
+  </div>
+);
 
 
 export function PredictionDetailsDialog({ match, children }: PredictionDetailsDialogProps) {
@@ -79,14 +80,15 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
     }, [open, match, summary]);
 
     if (!match.prediction) {
-        // Find a way to render children with disabled state
         return <>{children}</>;
     }
+  
+    const { oneXTwo, doubleChance, over05, over15, over25, bttsYes, bttsNo, halfTimeDraw, correctScoreRange } = match.prediction.outcomes;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-4">
              <div className="flex items-center gap-2">
@@ -114,25 +116,57 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
-            <div className="space-y-2">
-                <h4 className="font-medium text-center">Match Outcome (1X2)</h4>
+            
+            <div className="space-y-3">
+                <h4 className="font-medium text-center text-sm uppercase text-muted-foreground">Match Outcome (1X2)</h4>
                 <div className='flex gap-4'>
-                    <ProbabilityBar label="Home Win" value={match.prediction.outcomes.oneXTwo.home} variant="home" />
-                    <ProbabilityBar label="Draw" value={match.prediction.outcomes.oneXTwo.draw} variant="draw" />
-                    <ProbabilityBar label="Away Win" value={match.prediction.outcomes.oneXTwo.away} variant="away" />
+                    <ProbabilityBar label="Home Win" value={oneXTwo.home} />
+                    <ProbabilityBar label="Draw" value={oneXTwo.draw} />
+                    <ProbabilityBar label="Away Win" value={oneXTwo.away} />
                 </div>
             </div>
-          
-            <div className="grid grid-cols-2 gap-4">
-                <div className='flex flex-col items-center justify-center p-4 border rounded-lg bg-muted/50'>
-                    <div className='text-3xl font-bold'>{(match.prediction.outcomes.over25 * 100).toFixed(0)}%</div>
-                    <div className='text-sm text-muted-foreground'>Over 2.5 Goals</div>
+            
+            <Separator />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="font-medium text-center text-sm uppercase text-muted-foreground">Goals</h4>
+                <div className="space-y-3">
+                   {over05 && <ProbabilityBar label="Over 0.5" value={over05} />}
+                   <ProbabilityBar label="Over 1.5" value={over15} />
+                   <ProbabilityBar label="Over 2.5" value={over25} />
                 </div>
-                <div className='flex flex-col items-center justify-center p-4 border rounded-lg bg-muted/50'>
-                    <div className='text-3xl font-bold'>{(match.prediction.outcomes.bttsYes * 100).toFixed(0)}%</div>
-                    <div className='text-sm text-muted-foreground'>Both Teams to Score</div>
-                </div>
+                 <Separator />
+                 <div className="space-y-3">
+                   <ProbabilityBar label="Both Teams to Score (Yes)" value={bttsYes} />
+                   {bttsNo && <ProbabilityBar label="Both Teams to Score (No)" value={bttsNo} />}
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium text-center text-sm uppercase text-muted-foreground">Other Markets</h4>
+                {doubleChance && (
+                  <>
+                    <div className="space-y-3">
+                        <ProbabilityBar label="Double Chance (Home/Draw)" value={doubleChance.homeOrDraw} />
+                        <ProbabilityBar label="Double Chance (Away/Draw)" value={doubleChance.drawOrAway} />
+                    </div>
+                    <Separator />
+                  </>
+                )}
+                 {halfTimeDraw && (
+                    <div className="space-y-3">
+                        <ProbabilityBar label="Draw at Half Time" value={halfTimeDraw} />
+                    </div>
+                 )}
+                 <div className="pt-2 text-center">
+                    <div className="text-sm text-muted-foreground">Correct Score Range</div>
+                    <div className="font-semibold text-lg">{correctScoreRange}</div>
+                 </div>
+              </div>
             </div>
+
+            <Separator />
             
             <div>
                  <Alert>
@@ -151,8 +185,8 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
             </div>
 
             <div className="text-center">
-                <Badge>{match.prediction.bucket}</Badge>
-                <p className="text-sm text-muted-foreground mt-1">Confidence: {match.prediction.confidence}%</p>
+                <Badge variant="outline" className="text-base px-4 py-1">{match.prediction.bucket}</Badge>
+                <p className="text-sm text-muted-foreground mt-2">Confidence: {match.prediction.confidence}%</p>
             </div>
 
         </div>

@@ -1,3 +1,4 @@
+
 export interface Team {
   _id: string;
   name: string;
@@ -36,10 +37,14 @@ export interface Prediction {
   };
   outcomes: {
     oneXTwo: { home: number; draw: number; away: number };
+    doubleChance: { homeOrDraw: number; homeOrAway: number; drawOrAway: number };
+    over05: number;
     over15: number;
     over25: number;
     bttsYes: number;
+    bttsNo: number;
     correctScoreRange: string;
+    halfTimeDraw: number;
   };
   confidence: number;
   bucket: '2odds' | '5odds' | 'vip' | 'big10';

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -34,10 +35,18 @@ const GenerateMatchPredictionsOutputSchema = z.object({
     draw: z.number().describe('Probability of a draw (0-1).'),
     away: z.number().describe('Probability of away team winning (0-1).'),
   }),
+  doubleChance: z.object({
+    homeOrDraw: z.number().describe('Probability of home team winning or a draw (0-1).'),
+    homeOrAway: z.number().describe('Probability of home or away team winning (0-1).'),
+    drawOrAway: z.number().describe('Probability of a draw or away team winning (0-1).'),
+  }),
+  over05: z.number().describe('Probability of over 0.5 goals (0-1).'),
   over15: z.number().describe('Probability of over 1.5 goals (0-1).'),
   over25: z.number().describe('Probability of over 2.5 goals (0-1).'),
   bttsYes: z.number().describe('Probability of both teams to score (0-1).'),
+  bttsNo: z.number().describe('Probability of at least one team not scoring (0-1).'),
   correctScoreRange: z.string().describe('Most likely correct score range.'),
+  halfTimeDraw: z.number().describe('Probability of the match being a draw at half-time (0-1).'),
   confidence: z.number().describe('Confidence level of the prediction (50-100).'),
   bucket: z.string().describe('The prediction bucket (vip, 2odds, 5odds, big10).'),
 });
@@ -49,7 +58,7 @@ export async function generateMatchPredictions(input: GenerateMatchPredictionsIn
 
 const prompt = ai.definePrompt({
   name: 'generateMatchPredictionsPrompt',
-  input: {schema: GenerateMatchPredictionsInputSchema},
+  input: {schema: GenerateMatchLlmInputSchema},
   output: {schema: GenerateMatchPredictionsOutputSchema},
   prompt: `You are an expert sports analyst specializing in football (soccer) match predictions. Based on the provided information, generate the most likely outcomes for the match.
 
@@ -71,17 +80,15 @@ Home Advantage Weight: {{{homeAdvWeight}}}
 Goals Weight: {{{goalsWeight}}}
 {{#if injuriesWeight}}Injuries Weight: {{{injuriesWeight}}}{{/if}}
 
-Provide the following outcomes:
-- Probability of home team winning (home), a draw (draw), and away team winning (away) as values between 0 and 1 in the oneXTwo field.
-- Probability of over 1.5 goals (over15) and over 2.5 goals (over25) as values between 0 and 1.
-- Probability of both teams to score (bttsYes) as a value between 0 and 1.
-- Most likely correct score range (correctScoreRange).
-- Confidence level of the prediction (confidence) as a number between 50 and 100.
-- Prediction bucket (bucket) based on the following criteria:
-  - vip: high confidence ≥ 0.8 and conservative picks
-  - 2odds: curated small acca near 2.0 total
-  - 5odds: medium acca target
-  - big10: higher-risk aggregate selection`,
+Provide the following outcomes with probabilities as values between 0 and 1:
+- 1X2: home win, draw, away win.
+- Double Chance: home/draw, home/away, draw/away.
+- Over/Under Goals: over 0.5, over 1.5, over 2.5.
+- Both Teams To Score: BTTS Yes, BTTS No.
+- Half-Time Result: probability of a draw at half-time.
+- Correct Score Range: the most likely range of correct scores (e.g., 1-0/2-1).
+- Confidence: your confidence level in the primary prediction (50-100).
+- Bucket: categorize the prediction into one of 'vip', '2odds', '5odds', 'big10' based on risk and confidence.`,
 });
 
 const generateMatchPredictionsFlow = ai.defineFlow(
