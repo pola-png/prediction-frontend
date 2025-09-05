@@ -6,10 +6,30 @@ import dbConnect from '@/lib/mongodb';
 // --- TheSportsDB Integration ---
 const THESPORTSDB_BASE_URL = 'https://www.thesportsdb.com/api/v1/json/1';
 const THESPORTSDB_LEAGUE_IDS = [
-    '4328', '4335', '4331', '4332', '4334', '4344', '4346', '4330', 
-    '4350', '4356', '4337', '4394', '4329', '4338', '4340', '4339',
-    '4722', '4655', '4351', '4387', '4401', '4347', '4355', '4380'
+    '4328', // English Premier League
+    '4329', // English League Championship
+    '4330', // Scottish Premier League
+    '4331', // German Bundesliga
+    '4332', // Italian Serie A
+    '4334', // French Ligue 1
+    '4335', // Spanish La Liga
+    '4337', // Dutch Eredivisie
+    '4338', // Portuguese Primeira Liga
+    '4339', // American MLS
+    '4344', // Polish Ekstraklasa
+    '4346', // Swedish Allsvenskan
+    '4350', // Norwegian Eliteserien
+    '4351', // Romanian Liga 1
+    '4355', // Finnish Veikkausliiga
+    '4356', // UEFA Champions League
+    '4387', // English League One
+    '4388', // English League Two
+    '4394', // English FA Cup
+    '4401', // English Carabao Cup
+    '4655', // Turkish Super Lig
+    '4722', // Danish Superliga
 ];
+
 
 interface TheSportsDBEvent {
     idEvent: string; strEvent: string; idLeague: string; strLeague: string;
@@ -42,7 +62,8 @@ async function getTeam(teamName: string, logoUrl: string, externalId?: string): 
 }
 
 
-async function transformTheSportsDBEvent(event: TheSportsDBEvent): Promise<Match> {
+async function transformTheSportsDBEvent(event: TheSportsDBEvent): Promise<Match | null> {
+   try {
     const homeTeam = await getTeam(event.strHomeTeam, event.strHomeTeamBadge, event.idHomeTeam);
     const awayTeam = await getTeam(event.strAwayTeam, event.strAwayTeamBadge, event.idAwayTeam);
     const matchDateUtc = new Date(`${event.dateEvent}T${event.strTime || '00:00:00'}Z`);
@@ -63,6 +84,10 @@ async function transformTheSportsDBEvent(event: TheSportsDBEvent): Promise<Match
         createdAt: existingMatch?.createdAt.toISOString() || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
+    } catch(e) {
+        console.error("Failed to transform TheSportsDB event", e);
+        return null;
+    }
 }
 
 async function getUpcomingMatchesFromTheSportsDB(limit: number): Promise<Match[]> {
@@ -79,30 +104,36 @@ async function getUpcomingMatchesFromTheSportsDB(limit: number): Promise<Match[]
         }
     }
     allEvents.sort((a, b) => new Date(`${a.dateEvent}T${a.strTime || '00:00:00'}Z`).getTime() - new Date(`${b.dateEvent}T${b.strTime || '00:00:00'}Z`).getTime());
-    return Promise.all(allEvents.slice(0, limit).map(transformTheSportsDBEvent));
+    const transformedEvents = await Promise.all(allEvents.slice(0, limit).map(transformTheSportsDBEvent));
+    return transformedEvents.filter(m => m !== null) as Match[];
 }
 
 
-async function transformOpenligaDBMatch(match: OpenligaDBMatch): Promise<Match> {
-    const homeTeam = await getTeam(match.team1.teamName, match.team1.teamIconUrl);
-    const awayTeam = await getTeam(match.team2.teamName, match.team2.teamIconUrl);
-    const existingMatch = await MatchModel.findOne({ source: 'openligadb', externalId: match.matchID.toString() }).populate('prediction');
-    
-    return {
-        _id: existingMatch?._id.toString() || match.matchID.toString(),
-        source: 'openligadb',
-        externalId: match.matchID.toString(),
-        leagueCode: match.leagueName,
-        season: match.leagueSeason,
-        matchDateUtc: match.matchDateTimeUTC,
-        status: 'scheduled',
-        homeTeam,
-        awayTeam,
-        prediction: existingMatch ? (existingMatch.prediction as any) : undefined,
-        lastUpdatedAt: new Date().toISOString(),
-        createdAt: existingMatch?.createdAt.toISOString() || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    };
+async function transformOpenligaDBMatch(match: OpenligaDBMatch): Promise<Match | null> {
+    try {
+        const homeTeam = await getTeam(match.team1.teamName, match.team1.teamIconUrl);
+        const awayTeam = await getTeam(match.team2.teamName, match.team2.teamIconUrl);
+        const existingMatch = await MatchModel.findOne({ source: 'openligadb', externalId: match.matchID.toString() }).populate('prediction');
+        
+        return {
+            _id: existingMatch?._id.toString() || match.matchID.toString(),
+            source: 'openligadb',
+            externalId: match.matchID.toString(),
+            leagueCode: match.leagueName,
+            season: match.leagueSeason,
+            matchDateUtc: match.matchDateTimeUTC,
+            status: 'scheduled',
+            homeTeam,
+            awayTeam,
+            prediction: existingMatch ? (existingMatch.prediction as any) : undefined,
+            lastUpdatedAt: new Date().toISOString(),
+            createdAt: existingMatch?.createdAt.toISOString() || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+    } catch (e) {
+        console.error("Failed to transform OpenLigaDB event", e);
+        return null;
+    }
 }
 
 
@@ -122,17 +153,27 @@ async function getUpcomingMatchesFromOpenligaDB(limit: number): Promise<Match[]>
         }
     }
     allMatches.sort((a, b) => new Date(a.matchDateTimeUTC).getTime() - new Date(b.matchDateTimeUTC).getTime());
-    return Promise.all(allMatches.slice(0, limit).map(transformOpenligaDBMatch));
+    const transformedMatches = await Promise.all(allMatches.slice(0, limit).map(transformOpenligaDBMatch));
+    return transformedMatches.filter(m => m !== null) as Match[];
 }
 
 
 export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     await dbConnect();
     try {
-        const sportsDbMatches = await getUpcomingMatchesFromTheSportsDB(limit);
-        const openligaDbMatches = await getUpcomingMatchesFromOpenligaDB(limit);
+        const sportsDbMatchesPromise = getUpcomingMatchesFromTheSportsDB(limit);
+        const openligaDbMatchesPromise = getUpcomingMatchesFromOpenligaDB(limit);
+
+        const [sportsDbMatches, openligaDbMatches] = await Promise.all([
+            sportsDbMatchesPromise,
+            openligaDbMatchesPromise
+        ]);
 
         const combined = [...sportsDbMatches, ...openligaDbMatches];
+        if (combined.length === 0) {
+            throw new Error("Both live APIs returned no matches.");
+        }
+        
         const uniqueMatches = Array.from(new Map(combined.map(m => [`${m.homeTeam.name}-${m.awayTeam.name}-${m.matchDateUtc.slice(0,10)}`, m])).values());
         
         uniqueMatches.sort((a,b) => new Date(a.matchDateUtc).getTime() - new Date(b.matchDateUtc).getTime());
@@ -149,6 +190,6 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
             .populate('prediction')
             .lean();
 
-        return dbMatches.map(m => ({...m, _id: m._id.toString()})) as unknown as Match[];
+        return dbMatches.map(m => ({...m, _id: m._id.toString(), homeTeam: {...(m.homeTeam as any), _id: (m.homeTeam as any)._id.toString()}, awayTeam: {...(m.awayTeam as any), _id: (m.awayTeam as any)._id.toString()}, prediction: m.prediction ? {...(m.prediction as any), _id: (m.prediction as any)._id.toString() } : undefined })) as unknown as Match[];
     }
 }
