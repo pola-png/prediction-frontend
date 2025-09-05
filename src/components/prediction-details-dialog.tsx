@@ -14,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { summarizeMatchInsights } from '@/ai/flows/summarize-match-insights';
+import { getMatchSummary } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Terminal } from 'lucide-react';
@@ -53,27 +53,26 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
         if (open && match.prediction && !summary) {
             setLoading(true);
             const fetchSummary = async () => {
-                try {
-                    const result = await summarizeMatchInsights({
-                        matchId: match._id,
-                        homeTeamName: match.homeTeam.name,
-                        awayTeamName: match.awayTeam.name,
-                        prediction: {
-                            oneXTwo: match.prediction!.outcomes.oneXTwo,
-                            over15: match.prediction!.outcomes.over15,
-                            over25: match.prediction!.outcomes.over25,
-                            bttsYes: match.prediction!.outcomes.bttsYes,
-                            correctScoreRange: match.prediction!.outcomes.correctScoreRange,
-                        },
-                        features: match.prediction!.features,
-                    });
-                    setSummary(result.summary);
-                } catch (error) {
-                    console.error("Failed to fetch match summary", error);
-                    setSummary("Could not load AI summary for this match.");
-                } finally {
-                    setLoading(false);
+                const result = await getMatchSummary({
+                    matchId: match._id,
+                    homeTeamName: match.homeTeam.name,
+                    awayTeamName: match.awayTeam.name,
+                    prediction: {
+                        oneXTwo: match.prediction!.outcomes.oneXTwo,
+                        over15: match.prediction!.outcomes.over15,
+                        over25: match.prediction!.outcomes.over25,
+                        bttsYes: match.prediction!.outcomes.bttsYes,
+                        correctScoreRange: match.prediction!.outcomes.correctScoreRange,
+                    },
+                    features: match.prediction!.features,
+                });
+                
+                if (result.error) {
+                    setSummary(result.error);
+                } else {
+                    setSummary(result.summary!);
                 }
+                setLoading(false);
             };
             fetchSummary();
         }
