@@ -49,4 +49,4 @@ const HistorySchema = new Schema<IHistory>({
 
 HistorySchema.index({ matchId: 1, predictionId: 1 });
 
-module.exports = mongoose.models.History || mongoose.model<IHistory>('History', HistorySchema);
+export default mongoose.models.History || mongoose.model<IHistory>('History', HistorySchema);

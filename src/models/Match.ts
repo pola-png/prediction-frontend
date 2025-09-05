@@ -41,4 +41,4 @@ const MatchSchema = new Schema<IMatch>({
 MatchSchema.index({ source: 1, externalId: 1 }, { unique: true });
 MatchSchema.index({ matchDateUtc: -1, leagueCode: 1, status: 1 });
 
-module.exports = mongoose.models.Match || mongoose.model<IMatch>('Match', MatchSchema);
+export default mongoose.models.Match || mongoose.model<IMatch>('Match', MatchSchema);
