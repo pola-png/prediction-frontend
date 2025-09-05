@@ -11,7 +11,8 @@ async function getRecentResults(): Promise<Match[]> {
         return [];
     }
     const results = await res.json();
-    return results.map((r: any) => ({ ...r.matchId, homeGoals: r.result.homeGoals, awayGoals: r.result.awayGoals, status: 'finished' }));
+    // The API returns history objects; we need to transform them into Match objects.
+    return results;
 }
 
 
