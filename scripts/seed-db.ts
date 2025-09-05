@@ -1,13 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+import mongoose from 'mongoose';
+import { upcomingMatches, finishedMatches } from '../src/lib/mock-data-for-seeding';
 
-require('dotenv').config({ path: '.env' });
-const mongoose = require('mongoose');
-const { upcomingMatches, finishedMatches } = require('../src/lib/mock-data-for-seeding');
-
-// Correctly handle module exports for JS/TS interop by accessing the .default property
-const Team = require('../src/models/Team').default;
-const Match = require('../src/models/Match').default;
-const Prediction = require('../src/models/Prediction').default;
-const History = require('../src/models/History').default;
+import Team from '../src/models/Team';
+import Match from '../src/models/Match';
+import Prediction from '../src/models/Prediction';
+import History from '../src/models/History';
 
 
 async function seedDB() {
