@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react';
 import { useState, useEffect, type ReactNode } from 'react';
 import type { Match } from '@/lib/types';
 import {
@@ -32,7 +33,7 @@ const ProbabilityBar = ({ label, value, variant }: { label: string; value: numbe
         <span className="text-sm font-medium">{label}</span>
         <span className="text-sm font-medium">{(value * 100).toFixed(0)}%</span>
       </div>
-      <Progress value={value * 100} className="h-2" indicatorClassName={colorClass} />
+      <Progress value={value * 100} className="h-2" />
     </div>
   );
 };
@@ -150,20 +151,3 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
     </Dialog>
   );
 }
-// Hack to fix progress bar color
-const ProgressIndicator = Progress.render().displayName;
-Progress.defaultProps = {
-    ...Progress.defaultProps,
-    // @ts-ignore
-    indicatorClassName: '',
-};
-const OriginalProgress = Progress.render;
-Progress.render = React.forwardRef<any, any>(({ className, value, indicatorClassName, ...props }, ref) => (
-    <OriginalProgress ref={ref} className={className} value={value} {...props}>
-         {/* @ts-ignore */}
-        <Progress.Indicator
-            className={`h-full w-full flex-1 bg-primary transition-all ${indicatorClassName}`}
-            style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
-        />
-    </OriginalProgress>
-));

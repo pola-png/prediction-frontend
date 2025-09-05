@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Football, Home, ShieldCheck, Rocket, BarChart, Trophy, Settings } from 'lucide-react';
+import { Goal, Home, ShieldCheck, Rocket, BarChart, Trophy, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
@@ -31,7 +31,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="text-primary hover:bg-transparent" asChild>
             <Link href="/" aria-label="Home">
-              <Football className="w-6 h-6" />
+              <Goal className="w-6 h-6" />
             </Link>
           </Button>
           <h1 className="text-xl font-semibold text-foreground">GoalGazer</h1>
