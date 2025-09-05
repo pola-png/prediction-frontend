@@ -16,10 +16,10 @@ import { Button } from './ui/button';
 
 const menuItems = [
   { href: '/', label: 'Dashboard', icon: Home },
-  { href: '#', label: 'VIP', icon: ShieldCheck },
-  { href: '#', label: '2 Odds', icon: Rocket },
-  { href: '#', label: '5 Odds', icon: BarChart },
-  { href: '#', label: 'Big 10+', icon: Trophy },
+  { href: '/predictions/vip', label: 'VIP', icon: ShieldCheck },
+  { href: '/predictions/2odds', label: '2 Odds', icon: Rocket },
+  { href: '/predictions/5odds', label: '5 Odds', icon: BarChart },
+  { href: '/predictions/big10', label: 'Big 10+', icon: Trophy },
 ];
 
 export function AppSidebar() {
