@@ -15,8 +15,12 @@ const bucketDetails: Record<string, { title: string, description: string }> = {
 }
 
 async function getMatchesByBucket(bucket: string): Promise<Match[]> {
-    const { upcomingMatches } = await import('@/lib/mock-data');
-    return upcomingMatches.filter(match => match.prediction?.bucket === bucket);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/predictions?bucket=${bucket}`, { cache: 'no-store' });
+    if (!res.ok) {
+        console.error(`Failed to fetch matches for bucket ${bucket}`);
+        return [];
+    }
+    return res.json();
 }
 
 

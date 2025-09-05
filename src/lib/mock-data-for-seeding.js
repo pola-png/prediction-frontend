@@ -1,6 +1,5 @@
-import type { Match } from './types';
-
-export const upcomingMatches: Match[] = [
+// This file is in JS because it's used by a node script.
+const upcomingMatches = [
   {
     _id: '665b1d9e7f8a9b0e1c8d3b8e',
     source: 'footballjson',
@@ -23,7 +22,6 @@ export const upcomingMatches: Match[] = [
     updatedAt: new Date(),
     prediction: {
       _id: 'pred_1',
-      matchId: '665b1d9e7f8a9b0e1c8d3b8e',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.4,
@@ -66,7 +64,6 @@ export const upcomingMatches: Match[] = [
     updatedAt: new Date(),
     prediction: {
       _id: 'pred_2',
-      matchId: '665b1d9e7f8a9b0e1c8d3b8f',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.4,
@@ -109,7 +106,6 @@ export const upcomingMatches: Match[] = [
     updatedAt: new Date(),
     prediction: {
       _id: 'pred_3',
-      matchId: '665b1d9e7f8a9b0e1c8d3b90',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.4,
@@ -152,7 +148,6 @@ export const upcomingMatches: Match[] = [
     updatedAt: new Date(),
     prediction: {
       _id: 'pred_4',
-      matchId: '665b1d9e7f8a9b0e1c8d3b91',
       version: 'v1.0',
       features: {
         teamFormWeight: 0.5,
@@ -174,3 +169,5 @@ export const upcomingMatches: Match[] = [
     },
   },
 ];
+
+module.exports = { upcomingMatches };

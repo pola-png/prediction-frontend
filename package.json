@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "node scripts/seed-db.js"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
@@ -44,6 +45,7 @@
     "firebase": "^11.9.1",
     "genkit": "^1.14.1",
     "lucide-react": "^0.475.0",
+    "mongoose": "^8.5.1",
     "next": "15.3.3",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",

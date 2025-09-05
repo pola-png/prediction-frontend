@@ -49,19 +49,19 @@ const predictionBuckets = [
 ];
 
 async function getBucketCounts() {
-    const { upcomingMatches } = await import('@/lib/mock-data');
-    const counts: Record<string, number> = {
-        vip: 0,
-        '2odds': 0,
-        '5odds': 0,
-        big10: 0,
-    };
-    for (const match of upcomingMatches) {
-        if (match.prediction) {
-            counts[match.prediction.bucket]++;
-        }
-    }
-    return counts;
+  const buckets = ['vip', '2odds', '5odds', 'big10'];
+  const counts: Record<string, number> = {};
+
+  for (const bucket of buckets) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/predictions?bucket=${bucket}&limit=100`, { cache: 'no-store' });
+      if (res.ok) {
+          const data = await res.json();
+          counts[bucket] = data.length;
+      } else {
+          counts[bucket] = 0;
+      }
+  }
+  return counts;
 }
 
 
@@ -109,7 +109,7 @@ export default async function PredictionsPage() {
                     <bucket.icon className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{bucketCounts[bucket.bucket]} Active</div>
+                    <div className="text-2xl font-bold">{bucketCounts[bucket.bucket] ?? 0} Active</div>
                     <p className="text-xs text-muted-foreground">
                       {bucket.description}
                     </p>

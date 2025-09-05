@@ -1,5 +1,5 @@
 export interface Team {
-  id?: string;
+  _id: string;
   name: string;
   logoUrl: string;
 }
@@ -10,16 +10,16 @@ export interface Match {
   externalId: string;
   leagueCode: string;
   season: string;
-  matchDateUtc: Date;
+  matchDateUtc: string; // Changed to string for serialization
   status: 'scheduled' | 'in-progress' | 'finished' | 'postponed' | 'canceled';
   homeTeam: Team;
   awayTeam: Team;
   homeGoals?: number;
   awayGoals?: number;
   tags?: ('2odds' | '5odds' | 'vip' | 'big10')[];
-  lastUpdatedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  lastUpdatedAt: string; // Changed to string for serialization
+  createdAt: string; // Changed to string for serialization
+  updatedAt: string; // Changed to string for serialization
   prediction?: Prediction;
 }
 
@@ -43,6 +43,6 @@ export interface Prediction {
   };
   confidence: number;
   bucket: '2odds' | '5odds' | 'vip' | 'big10';
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string; // Changed to string for serialization
+  updatedAt: string; // Changed to string for serialization
 }

@@ -50,25 +50,28 @@ const predictionBuckets = [
 ];
 
 async function getUpcomingMatches(): Promise<Match[]> {
-  // In a real app, you'd fetch this from the API
-  const { upcomingMatches } = await import('@/lib/mock-data');
-  return upcomingMatches;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/matches/upcoming?limit=5`, { cache: 'no-store' });
+  if (!res.ok) {
+    console.error('Failed to fetch upcoming matches');
+    return [];
+  }
+  return res.json();
 }
 
 async function getBucketCounts() {
-    const { upcomingMatches } = await import('@/lib/mock-data');
-    const counts = {
-        vip: 0,
-        '2odds': 0,
-        '5odds': 0,
-        big10: 0,
-    };
-    for (const match of upcomingMatches) {
-        if (match.prediction) {
-            counts[match.prediction.bucket]++;
-        }
-    }
-    return counts;
+  const buckets = ['vip', '2odds', '5odds', 'big10'];
+  const counts: Record<string, number> = {};
+
+  for (const bucket of buckets) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/predictions?bucket=${bucket}&limit=100`, { cache: 'no-store' });
+      if (res.ok) {
+          const data = await res.json();
+          counts[bucket] = data.length;
+      } else {
+          counts[bucket] = 0;
+      }
+  }
+  return counts;
 }
 
 
@@ -117,7 +120,7 @@ export default async function HomePage() {
                   <bucket.icon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{bucketCounts[bucket.bucket as keyof typeof bucketCounts]} Active</div>
+                  <div className="text-2xl font-bold">{bucketCounts[bucket.bucket as keyof typeof bucketCounts] ?? 0} Active</div>
                   <p className="text-xs text-muted-foreground">
                     {bucket.description}
                   </p>
