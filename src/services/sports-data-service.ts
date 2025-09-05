@@ -130,14 +130,25 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     await dbConnect();
     try {
         const sportsDbMatches = await getUpcomingMatchesFromTheSportsDB(limit);
-        if (sportsDbMatches.length > 0) {
-            return sportsDbMatches;
-        }
-        console.log('TheSportsDB returned no matches, falling back to OpenligaDB.');
-        return await getUpcomingMatchesFromOpenligaDB(limit);
+        const openligaDbMatches = await getUpcomingMatchesFromOpenligaDB(limit);
+
+        const combined = [...sportsDbMatches, ...openligaDbMatches];
+        const uniqueMatches = Array.from(new Map(combined.map(m => [`${m.homeTeam.name}-${m.awayTeam.name}-${m.matchDateUtc.slice(0,10)}`, m])).values());
+        
+        uniqueMatches.sort((a,b) => new Date(a.matchDateUtc).getTime() - new Date(b.matchDateUtc).getTime());
+
+        return uniqueMatches.slice(0, limit);
 
     } catch (error) {
-        console.error('Failed to fetch from TheSportsDB, falling back to OpenligaDB:', error);
-        return await getUpcomingMatchesFromOpenligaDB(limit);
+        console.error('Failed to fetch from primary sources, attempting to use fallback data from DB:', error);
+        const dbMatches = await MatchModel.find({ status: 'scheduled', matchDateUtc: { $gte: new Date() }})
+            .sort({ matchDateUtc: 1 })
+            .limit(limit)
+            .populate('homeTeam')
+            .populate('awayTeam')
+            .populate('prediction')
+            .lean();
+
+        return dbMatches.map(m => ({...m, _id: m._id.toString()})) as unknown as Match[];
     }
 }

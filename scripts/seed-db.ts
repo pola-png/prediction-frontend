@@ -1,7 +1,8 @@
+
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local' });
 import mongoose from 'mongoose';
-import { upcomingMatches, finishedMatches } from '../src/lib/mock-data-for-seeding';
+import { getOpenFootballData, type OpenFootballMatch } from '../src/lib/openfootball-data';
 
 import Team from '../src/models/Team';
 import Match from '../src/models/Match';
@@ -23,72 +24,60 @@ async function seedDB() {
     });
     console.log('Connected to MongoDB.');
 
-    // Clear existing data
     await History.deleteMany({});
     await Prediction.deleteMany({});
     await Match.deleteMany({});
     await Team.deleteMany({});
     console.log('Cleared existing data.');
 
-    const allMatches = [...upcomingMatches, ...finishedMatches];
+    const allMatches = await getOpenFootballData();
+    console.log(`Fetched ${allMatches.length} matches from openfootball.`);
 
-    // Seed Teams
-    const allTeams = [];
+    const allTeams = new Map<string, { name: string, logoUrl: string }>();
     allMatches.forEach(match => {
-      allTeams.push(match.homeTeam);
-      allTeams.push(match.awayTeam);
+        allTeams.set(match.team1, { name: match.team1, logoUrl: `https://picsum.photos/seed/${match.team1.replace(/\s+/g, '')}/40/40` });
+        allTeams.set(match.team2, { name: match.team2, logoUrl: `https://picsum.photos/seed/${match.team2.replace(/\s+/g, '')}/40/40` });
     });
 
-    const uniqueTeams = allTeams.reduce((acc, current) => {
-        if (!acc.find(item => item.name === current.name)) {
-            acc.push(current);
-        }
-        return acc;
-    }, []);
-
-    const createdTeams = await Team.insertMany(uniqueTeams.map(t => ({ name: t.name, logoUrl: t.logoUrl })));
+    const createdTeams = await Team.insertMany(Array.from(allTeams.values()));
     console.log(`Seeded ${createdTeams.length} teams.`);
 
     const teamMap = new Map(createdTeams.map(t => [t.name, t._id]));
 
-    // Seed Matches, Predictions, and History
     for (const matchData of allMatches) {
-        const homeTeamId = teamMap.get(matchData.homeTeam.name);
-        const awayTeamId = teamMap.get(matchData.awayTeam.name);
+        const homeTeamId = teamMap.get(matchData.team1);
+        const awayTeamId = teamMap.get(matchData.team2);
 
         if (!homeTeamId || !awayTeamId) {
-            console.warn(`Could not find teams for match: ${matchData.homeTeam.name} vs ${matchData.awayTeam.name}`);
+            console.warn(`Could not find team IDs for match: ${matchData.team1} vs ${matchData.team2}`);
             continue;
         }
 
-        const match = new Match({
-            ...matchData,
+        const existingMatch = await Match.findOne({
             homeTeam: homeTeamId,
             awayTeam: awayTeamId,
+            matchDateUtc: new Date(matchData.date)
         });
-
-        if (matchData.prediction) {
-            const prediction = new Prediction({
-                ...matchData.prediction,
-                matchId: match._id,
-            });
-            await prediction.save();
-            match.prediction = prediction._id;
-
-            if (matchData.history) {
-                 const history = new History({
-                    ...matchData.history,
-                    matchId: match._id,
-                    predictionId: prediction._id,
-                });
-                await history.save();
-            }
-        }
+        if (existingMatch) continue;
+        
+        const match = new Match({
+            source: 'openfootball',
+            externalId: `${matchData.team1}-${matchData.team2}-${matchData.date}`,
+            leagueCode: matchData.league,
+            season: matchData.season,
+            matchDateUtc: new Date(matchData.date),
+            status: matchData.score ? 'finished' : 'scheduled',
+            homeTeam: homeTeamId,
+            awayTeam: awayTeamId,
+            homeGoals: matchData.score?.ft[0],
+            awayGoals: matchData.score?.ft[1],
+            lastUpdatedAt: new Date(),
+        });
         
         await match.save();
     }
 
-    console.log(`Seeded ${allMatches.length} matches and their predictions/history.`);
+    console.log(`Seeded ${allMatches.length} matches.`);
     console.log('Database seeded successfully!');
 
   } catch (error) {
