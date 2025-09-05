@@ -1,10 +1,12 @@
 require('dotenv').config({ path: '.env' });
 const mongoose = require('mongoose');
-const { upcomingMatches } = require('../src/lib/mock-data-for-seeding');
+const { upcomingMatches, finishedMatches } = require('../src/lib/mock-data-for-seeding');
 
 const Team = require('../src/models/Team').default;
 const Match = require('../src/models/Match').default;
 const Prediction = require('../src/models/Prediction').default;
+const History = require('../src/models/History').default;
+
 
 async function seedDB() {
   const MONGODB_URI = process.env.MONGO_URI;
@@ -21,14 +23,17 @@ async function seedDB() {
     console.log('Connected to MongoDB.');
 
     // Clear existing data
+    await History.deleteMany({});
     await Prediction.deleteMany({});
     await Match.deleteMany({});
     await Team.deleteMany({});
     console.log('Cleared existing data.');
 
+    const allMatches = [...upcomingMatches, ...finishedMatches];
+
     // Seed Teams
     const allTeams = [];
-    upcomingMatches.forEach(match => {
+    allMatches.forEach(match => {
       allTeams.push(match.homeTeam);
       allTeams.push(match.awayTeam);
     });
@@ -45,8 +50,8 @@ async function seedDB() {
 
     const teamMap = new Map(createdTeams.map(t => [t.name, t._id]));
 
-    // Seed Matches and Predictions
-    for (const matchData of upcomingMatches) {
+    // Seed Matches, Predictions, and History
+    for (const matchData of allMatches) {
         const homeTeamId = teamMap.get(matchData.homeTeam.name);
         const awayTeamId = teamMap.get(matchData.awayTeam.name);
 
@@ -68,12 +73,21 @@ async function seedDB() {
             });
             await prediction.save();
             match.prediction = prediction._id;
+
+            if (matchData.history) {
+                 const history = new History({
+                    ...matchData.history,
+                    matchId: match._id,
+                    predictionId: prediction._id,
+                });
+                await history.save();
+            }
         }
         
         await match.save();
     }
 
-    console.log(`Seeded ${upcomingMatches.length} matches and their predictions.`);
+    console.log(`Seeded ${allMatches.length} matches and their predictions/history.`);
     console.log('Database seeded successfully!');
 
   } catch (error) {

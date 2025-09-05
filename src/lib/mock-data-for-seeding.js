@@ -18,8 +18,6 @@ const upcomingMatches = [
     },
     tags: ['vip', 'big10'],
     lastUpdatedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
     prediction: {
       _id: 'pred_1',
       version: 'v1.0',
@@ -38,8 +36,6 @@ const upcomingMatches = [
       },
       confidence: 88,
       bucket: 'vip',
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
   },
   {
@@ -60,8 +56,6 @@ const upcomingMatches = [
     },
     tags: ['2odds', 'big10'],
     lastUpdatedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
     prediction: {
       _id: 'pred_2',
       version: 'v1.0',
@@ -80,8 +74,6 @@ const upcomingMatches = [
       },
       confidence: 92,
       bucket: '2odds',
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
   },
   {
@@ -102,8 +94,6 @@ const upcomingMatches = [
     },
     tags: ['5odds'],
     lastUpdatedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
     prediction: {
       _id: 'pred_3',
       version: 'v1.0',
@@ -122,8 +112,6 @@ const upcomingMatches = [
       },
       confidence: 85,
       bucket: '5odds',
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
   },
     {
@@ -144,8 +132,6 @@ const upcomingMatches = [
     },
     tags: ['vip'],
     lastUpdatedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
     prediction: {
       _id: 'pred_4',
       version: 'v1.0',
@@ -164,10 +150,66 @@ const upcomingMatches = [
       },
       confidence: 80,
       bucket: 'vip',
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
   },
 ];
 
-module.exports = { upcomingMatches };
+const finishedMatches = [
+    {
+        _id: '665b1d9e7f8a9b0e1c8d3b92',
+        source: 'footballjson',
+        externalId: '5',
+        leagueCode: 'PL',
+        season: '2023/2024',
+        matchDateUtc: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        status: 'finished',
+        homeTeam: { name: 'Chelsea', logoUrl: 'https://picsum.photos/seed/chelsea/40/40' },
+        awayTeam: { name: 'Tottenham Hotspur', logoUrl: 'https://picsum.photos/seed/tottenham/40/40' },
+        homeGoals: 2,
+        awayGoals: 0,
+        lastUpdatedAt: new Date(),
+        prediction: {
+            _id: 'pred_5',
+            version: 'v1.0',
+            features: { teamFormWeight: 0.4, h2hWeight: 0.3, homeAdvWeight: 0.2, goalsWeight: 0.1 },
+            outcomes: { oneXTwo: { home: 0.5, draw: 0.3, away: 0.2 }, over15: 0.8, over25: 0.5, bttsYes: 0.4, correctScoreRange: '2-0/1-0' },
+            confidence: 85,
+            bucket: 'vip',
+        },
+        history: {
+            resolvedAt: new Date(),
+            result: { homeGoals: 2, awayGoals: 0, outcome: 'home', over15: true, over25: false, bttsYes: false },
+            correctness: { oneXTwo: true, over15: true, over25: true, bttsYes: true, correctScoreRange: true },
+        }
+    },
+    {
+        _id: '665b1d9e7f8a9b0e1c8d3b93',
+        source: 'openligadb',
+        externalId: '6',
+        leagueCode: 'BL1',
+        season: '2023/2024',
+        matchDateUtc: new Date(new Date().getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        status: 'finished',
+        homeTeam: { name: 'RB Leipzig', logoUrl: 'https://picsum.photos/seed/leipzig/40/40' },
+        awayTeam: { name: 'Eintracht Frankfurt', logoUrl: 'https://picsum.photos/seed/frankfurt/40/40' },
+        homeGoals: 2,
+        awayGoals: 2,
+        lastUpdatedAt: new Date(),
+        prediction: {
+            _id: 'pred_6',
+            version: 'v1.0',
+            features: { teamFormWeight: 0.4, h2hWeight: 0.2, homeAdvWeight: 0.2, goalsWeight: 0.2 },
+            outcomes: { oneXTwo: { home: 0.4, draw: 0.35, away: 0.25 }, over15: 0.9, over25: 0.7, bttsYes: 0.75, correctScoreRange: '2-1/1-1' },
+            confidence: 90,
+            bucket: 'big10',
+        },
+        history: {
+            resolvedAt: new Date(),
+            result: { homeGoals: 2, awayGoals: 2, outcome: 'draw', over15: true, over25: true, bttsYes: true },
+            correctness: { oneXTwo: true, over15: true, over25: true, bttsYes: true, correctScoreRange: false },
+        }
+    }
+];
+
+
+module.exports = { upcomingMatches, finishedMatches };

@@ -25,8 +25,6 @@ interface PredictionDetailsDialogProps {
 }
 
 const ProbabilityBar = ({ label, value, variant }: { label: string; value: number; variant: 'home' | 'draw' | 'away' }) => {
-  const colorClass = variant === 'home' ? 'bg-blue-500' : variant === 'away' ? 'bg-red-500' : 'bg-gray-500';
-
   return (
     <div className="w-full">
       <div className="flex justify-between mb-1">
@@ -75,6 +73,7 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
     }, [open, match, summary]);
 
     if (!match.prediction) {
+        // Find a way to render children with disabled state
         return <>{children}</>;
     }
 
@@ -91,7 +90,11 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
                 </Avatar>
                 <span>{match.homeTeam.name}</span>
              </div>
-             <span className='text-muted-foreground'>vs</span>
+              {match.status === 'finished' ? (
+                <span className='font-bold text-2xl'>{match.homeGoals} - {match.awayGoals}</span>
+              ) : (
+                <span className='text-muted-foreground'>vs</span>
+              )}
              <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
                     <AvatarImage src={match.awayTeam.logoUrl} alt={match.awayTeam.name} data-ai-hint="team logo" />

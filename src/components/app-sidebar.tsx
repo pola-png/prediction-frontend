@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Goal, Home, ShieldCheck, Rocket, BarChart, Trophy, Settings } from 'lucide-react';
+import { Goal, Home, ShieldCheck, Rocket, BarChart, Trophy, Settings, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
@@ -20,6 +20,7 @@ const menuItems = [
   { href: '/predictions/2odds', label: '2 Odds', icon: Rocket },
   { href: '/predictions/5odds', label: '5 Odds', icon: BarChart },
   { href: '/predictions/big10', label: 'Big 10+', icon: Trophy },
+  { href: '/results', label: 'Results', icon: ListChecks },
 ];
 
 export function AppSidebar() {

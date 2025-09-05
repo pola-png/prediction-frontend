@@ -10,16 +10,16 @@ export interface Match {
   externalId: string;
   leagueCode: string;
   season: string;
-  matchDateUtc: string; // Changed to string for serialization
+  matchDateUtc: string;
   status: 'scheduled' | 'in-progress' | 'finished' | 'postponed' | 'canceled';
   homeTeam: Team;
   awayTeam: Team;
   homeGoals?: number;
   awayGoals?: number;
   tags?: ('2odds' | '5odds' | 'vip' | 'big10')[];
-  lastUpdatedAt: string; // Changed to string for serialization
-  createdAt: string; // Changed to string for serialization
-  updatedAt: string; // Changed to string for serialization
+  lastUpdatedAt: string;
+  createdAt: string;
+  updatedAt: string;
   prediction?: Prediction;
 }
 
@@ -43,6 +43,30 @@ export interface Prediction {
   };
   confidence: number;
   bucket: '2odds' | '5odds' | 'vip' | 'big10';
-  createdAt: string; // Changed to string for serialization
-  updatedAt: string; // Changed to string for serialization
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface History {
+    _id: string;
+    matchId: Match;
+    predictionId: Prediction;
+    resolvedAt?: string;
+    result: {
+        homeGoals?: number;
+        awayGoals?: number;
+        outcome?: 'home'|'draw'|'away';
+        over15?: boolean;
+        over25?: boolean;
+        bttsYes?: boolean;
+        correctScoreBucket?: string;
+    };
+    correctness: {
+        oneXTwo?: boolean;
+        over15?: boolean;
+        over25?: boolean;
+        bttsYes?: boolean;
+        correctScoreRange?: boolean;
+    };
+    createdAt: string;
 }
