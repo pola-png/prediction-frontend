@@ -5,11 +5,13 @@ import Match from '@/models/Match';
 export async function GET(request: Request) {
   try {
     await dbConnect();
+    // Ensure models are registered
+    const MatchModel = Match;
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    const upcomingMatches = await Match.find({
+    const upcomingMatches = await MatchModel.find({
       matchDateUtc: { $gte: new Date() },
       status: 'scheduled',
     })

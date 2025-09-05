@@ -3,10 +3,15 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Match from '@/models/Match';
 import Prediction from '@/models/Prediction';
+import Team from '@/models/Team';
 
 export async function GET(request: Request) {
   try {
     await dbConnect();
+    // Ensure models are registered
+    const MatchModel = Match;
+    const PredictionModel = Prediction;
+    const TeamModel = Team;
 
     const { searchParams } = new URL(request.url);
     const bucket = searchParams.get('bucket');
@@ -17,11 +22,11 @@ export async function GET(request: Request) {
     }
     
     // 1. Find predictions that match the bucket
-    const predictions = await Prediction.find({ bucket: bucket }).select('matchId');
+    const predictions = await PredictionModel.find({ bucket: bucket }).select('_id matchId');
     const matchIds = predictions.map(p => p.matchId);
 
     // 2. Find upcoming matches that correspond to those predictions
-    const matches = await Match.find({
+    const matches = await MatchModel.find({
       _id: { $in: matchIds },
       status: 'scheduled',
       matchDateUtc: { $gte: new Date() }

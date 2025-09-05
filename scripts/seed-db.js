@@ -4,10 +4,10 @@ const path = require('path');
 const { upcomingMatches, finishedMatches } = require('../src/lib/mock-data-for-seeding');
 
 // Correctly handle module exports for JS/TS interop by resolving paths
-const Team = require(path.resolve(__dirname, '../src/models/Team'));
-const Match = require(path.resolve(__dirname, '../src/models/Match'));
-const Prediction = require(path.resolve(__dirname, '../src/models/Prediction'));
-const History = require(path.resolve(__dirname, '../src/models/History'));
+const Team = require('../src/models/Team');
+const Match = require('../src/models/Match');
+const Prediction = require('../src/models/Prediction');
+const History = require('../src/models/History');
 
 
 async function seedDB() {
