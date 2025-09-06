@@ -9,7 +9,7 @@ import { Calendar, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { PredictionDetailsDialog } from './prediction-details-dialog';
 
-function getPredictionSummary(match: Match) {
+export function getPredictionSummary(match: Match) {
     if (!match.prediction) return 'No prediction available';
     
     const { home, away, draw } = match.prediction.outcomes.oneXTwo;

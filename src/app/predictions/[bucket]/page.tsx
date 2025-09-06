@@ -1,8 +1,8 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { MatchCard } from '@/components/match-card';
 import type { Match } from '@/lib/types';
+import { PredictionCard } from '@/components/prediction-card';
 
 const bucketDetails: Record<string, { title: string, description: string }> = {
     'vip': { title: 'VIP Predictions', description: 'High confidence, conservative picks with odds under 2.0.' },
@@ -26,6 +26,11 @@ export default async function BucketPage({ params }: { params: { bucket: string 
   const details = bucketDetails[bucket] || { title: 'Predictions', description: 'Browse predictions by category.' };
   
   const filteredMatches = await getMatchesByBucket(bucket);
+  
+  // For now, we'll treat all matches in a bucket as a single accumulator.
+  // In the future, this could be split into multiple cards.
+  const accumulators = filteredMatches.length > 0 ? [filteredMatches] : [];
+
 
   return (
     <SidebarProvider>
@@ -45,10 +50,10 @@ export default async function BucketPage({ params }: { params: { bucket: string 
                   {details.description}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {filteredMatches.length > 0 ? (
-                    filteredMatches.map((match: Match) => (
-                        <MatchCard key={match._id} match={match} />
+              <CardContent className="space-y-6">
+                {accumulators.length > 0 ? (
+                    accumulators.map((accumulator, index) => (
+                        <PredictionCard key={index} matches={accumulator} />
                     ))
                 ) : (
                     <div className="text-center text-muted-foreground py-8">
