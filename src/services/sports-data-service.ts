@@ -22,6 +22,8 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
     try {
         console.log(`Generating prediction for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
         const stats: MatchStats = await getMatchStats(match);
+        console.log(`Stats for ${match.homeTeam.name} vs ${match.awayTeam.name}:`, JSON.stringify(stats, null, 2));
+
 
         const paramsInput: GetPredictionParametersInput = {
             matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,

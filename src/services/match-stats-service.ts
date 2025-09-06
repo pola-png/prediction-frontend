@@ -57,7 +57,7 @@ export async function getMatchStats(match: Match): Promise<MatchStats> {
         teamAName: match.homeTeam.name,
         teamBName: match.awayTeam.name,
         matches: historicalMatches.map(m => ({
-            date: m.matchDateUtc,
+            date: new Date(m.matchDateUtc).toISOString(),
             homeTeam: m.homeTeam.name,
             awayTeam: m.awayTeam.name,
             homeGoals: m.homeGoals!,
