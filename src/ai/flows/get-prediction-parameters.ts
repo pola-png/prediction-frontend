@@ -56,6 +56,9 @@ const getPredictionParametersFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to generate prediction parameters. The prompt returned null.');
+    }
+    return output;
   }
 );
