@@ -10,7 +10,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import {
   predictionParametersTool,
   PredictionParametersSchema,
@@ -56,6 +56,9 @@ Now, call the predictionParametersTool with the calculated weights.
       model: 'gemini-1.5-flash-preview',
       prompt: prompt,
       tools: [predictionParametersTool],
+      toolConfig: {
+        choice: 'required'
+      }
     });
 
     const toolRequest = llmResponse.toolRequest();
