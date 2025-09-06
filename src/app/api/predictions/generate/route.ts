@@ -5,6 +5,11 @@ import Match from '@/models/Match';
 import { getAndGeneratePredictions } from '@/services/sports-data-service';
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  if (searchParams.get('secret') !== process.env.CRON_SECRET) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     await dbConnect();
 
@@ -34,4 +39,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'Internal Server Error', error: error.message }, { status: 500 });
   }
 }
-
