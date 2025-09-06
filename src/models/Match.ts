@@ -5,7 +5,7 @@ import type { IPrediction } from './Prediction';
 
 export interface IMatch extends Document {
   _id: Types.ObjectId;
-  source: 'footballjson' | 'openligadb' | 'openfootball';
+  source: 'footballjson' | 'openligadb';
   externalId: string;
   leagueCode: string;
   season: string;
@@ -23,7 +23,7 @@ export interface IMatch extends Document {
 }
 
 const MatchSchema = new Schema<IMatch>({
-  source: { type: String, enum: ['footballjson', 'openligadb', 'openfootball'], required: true },
+  source: { type: String, enum: ['footballjson', 'openligadb'], required: true },
   externalId: { type: String, required: true },
   leagueCode: { type: String, required: true },
   season: { type: String, required: true },
