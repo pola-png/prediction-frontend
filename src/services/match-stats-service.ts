@@ -18,7 +18,7 @@ export interface MatchStats {
 
 
 async function getHistoricalMatches(teamAId: string, teamBId: string, cutOffDate: string): Promise<Match[]> {
-    const twentyMatches = await MatchModel.find({
+    const matches = await MatchModel.find({
         $or: [
             { homeTeam: teamAId },
             { awayTeam: teamAId },
@@ -29,12 +29,12 @@ async function getHistoricalMatches(teamAId: string, teamBId: string, cutOffDate
         matchDateUtc: { $lt: new Date(cutOffDate) }
     })
     .sort({ matchDateUtc: -1 })
-    .limit(20)
+    .limit(200)
     .populate<{ homeTeam: Team, awayTeam: Team }>('homeTeam')
     .populate<{ homeTeam: Team, awayTeam: Team }>('awayTeam')
     .lean();
 
-    return twentyMatches as Match[];
+    return matches as Match[];
 }
 
 
