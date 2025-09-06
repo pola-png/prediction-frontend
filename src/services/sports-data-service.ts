@@ -103,26 +103,6 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     const Team = TeamModel;
     const Prediction = PredictionModel;
 
-    // First, fetch all upcoming matches
-    const allUpcomingMatches: Match[] = await MatchModel.find({
-        status: 'scheduled',
-        matchDateUtc: { $gte: new Date() }
-    })
-    .populate('homeTeam')
-    .populate('awayTeam')
-    .sort({ matchDateUtc: 1 })
-    .lean({ virtuals: true });
-
-    // Identify matches that are missing a prediction
-    const matchesToPredict = allUpcomingMatches.filter(match => !match.prediction);
-
-    // If there are matches that need predictions, generate them
-    if (matchesToPredict.length > 0) {
-        console.log(`Found ${matchesToPredict.length} upcoming matches without predictions. Generating now...`);
-        await getAndGeneratePredictions(matchesToPredict);
-    }
-    
-    // Fetch the final list of matches with predictions to return
     const matchesWithPredictions: Match[] = await MatchModel.find({
         status: 'scheduled',
         matchDateUtc: { $gte: new Date() }
@@ -187,4 +167,3 @@ export async function getRecentResults(limit = 20): Promise<Match[]> {
 
     return sanitizeObject<Match[]>(transformedResults as Match[]);
 }
-
