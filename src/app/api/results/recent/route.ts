@@ -30,11 +30,12 @@ export async function GET(request: Request) {
       })
       .populate({
         path: 'predictionId'
-      });
+      })
+      .lean();
 
       const transformedResults = recentResults.map(history => {
-        const match = history.matchId.toObject();
-        match.prediction = history.predictionId.toObject();
+        const match = history.matchId;
+        match.prediction = history.predictionId;
         match.homeGoals = history.result.homeGoals;
         match.awayGoals = history.result.awayGoals;
         match.status = 'finished';

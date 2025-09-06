@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     }
     
     // 1. Find predictions that match the bucket
-    const predictions = await PredictionModel.find({ bucket: bucket }).select('_id matchId');
+    const predictions = await PredictionModel.find({ bucket: bucket }).select('_id matchId').lean();
     const matchIds = predictions.map(p => p.matchId);
 
     // 2. Find upcoming matches that correspond to those predictions
@@ -35,7 +35,8 @@ export async function GET(request: Request) {
     .populate('awayTeam')
     .populate('prediction')
     .sort({ matchDateUtc: 1 })
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
     return NextResponse.json(matches);
   } catch (error) {

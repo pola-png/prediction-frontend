@@ -16,16 +16,17 @@ export async function GET(request: Request) {
     const PredictionModel = Prediction;
     const HistoryModel = History;
 
-    const teams = await TeamModel.find();
+    const teams = await TeamModel.find().lean();
     const matches = await MatchModel.find()
       .populate('homeTeam')
       .populate('awayTeam')
-      .populate('prediction');
+      .populate('prediction')
+      .lean();
 
-    const predictions = await PredictionModel.find().populate('matchId');
+    const predictions = await PredictionModel.find().populate('matchId').lean();
 
     
-    const histories = await HistoryModel.find();
+    const histories = await HistoryModel.find().lean();
 
 
     return NextResponse.json({ 
