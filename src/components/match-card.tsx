@@ -26,17 +26,17 @@ export function getPredictionSummary(match: Match) {
 }
 
 const ResultIcon = ({ match }: { match: Match }) => {
-    if (!match.prediction || match.status !== 'finished') return null;
+    if (!match.prediction || match.status !== 'finished' || match.homeGoals === undefined || match.awayGoals === undefined) return null;
 
-    const { home, away } = match.prediction.outcomes.oneXTwo;
+    const { home, away, draw } = match.prediction.outcomes.oneXTwo;
     
     let predictedOutcome: 'home' | 'away' | 'draw' = 'draw';
-    if (home > away && home > 0.5) predictedOutcome = 'home';
-    else if (away > home && away > 0.5) predictedOutcome = 'away';
+    if (home > away && home > draw) predictedOutcome = 'home';
+    else if (away > home && away > draw) predictedOutcome = 'away';
 
     let actualOutcome: 'home' | 'away' | 'draw' = 'draw';
-    if (match.homeGoals! > match.awayGoals!) actualOutcome = 'home';
-    else if (match.awayGoals! > match.homeGoals!) actualOutcome = 'away';
+    if (match.homeGoals > match.awayGoals) actualOutcome = 'home';
+    else if (match.awayGoals > match.homeGoals) actualOutcome = 'away';
 
     if (predictedOutcome === actualOutcome) {
         return <CheckCircle2 className="h-5 w-5 text-green-500" />;

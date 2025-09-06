@@ -10,20 +10,18 @@ import { generateMatchPredictions, type GenerateMatchPredictionsInput } from '@/
 import { getMatchStats, type MatchStats } from '@/services/match-stats-service';
 import { getPredictionParameters, type GetPredictionParametersInput, type PredictionParameters } from '@/ai/flows/get-prediction-parameters';
 import { ZodError } from 'zod';
+import { sanitizeObject } from '@/lib/utils';
 
-function sanitizeObject<T>(obj: any): T {
-    const str = JSON.stringify(obj);
-    return JSON.parse(str) as T;
-}
-
+const PREDICTION_VERSION = 'v1.1';
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
+  console.log(`Starting prediction generation process for ${matches.length} matches. Version: ${PREDICTION_VERSION}`);
   for (const match of matches) {
     let stats: MatchStats;
     try {
-      console.log(`Fetching stats for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
+      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Fetching stats...`);
       stats = await getMatchStats(match);
-       console.log(`Stats for ${match.homeTeam.name} vs ${match.awayTeam.name}:`, JSON.stringify(stats, null, 2));
+      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Stats fetched successfully.`);
     } catch (error) {
       console.error(`Failed to get match stats for match ${match._id}:`, error);
       continue; 
@@ -31,18 +29,19 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
 
     let parameters: PredictionParameters;
     try {
-      console.log(`Fetching prediction parameters for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
+      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Fetching prediction parameters...`);
       const paramsInput: GetPredictionParametersInput = {
         matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
       };
       parameters = await getPredictionParameters(paramsInput);
+       console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Parameters fetched:`, parameters);
     } catch (error) {
       console.error(`Failed to get prediction parameters for match ${match._id}:`, error);
       continue;
     }
 
     try {
-      console.log(`Generating prediction for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
+      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Generating prediction...`);
       const predictionInput: GenerateMatchPredictionsInput = {
         ...parameters,
         matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
@@ -57,7 +56,7 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
 
       const prediction = new PredictionModel({
         matchId: match._id,
-        version: '1.0',
+        version: PREDICTION_VERSION,
         features: {
           teamFormWeight: predictionInput.teamFormWeight,
           h2hWeight: predictionInput.h2hWeight,
@@ -71,7 +70,7 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
 
       await prediction.save();
       await MatchModel.findByIdAndUpdate(match._id, { prediction: prediction._id });
-      console.log(`Successfully generated and saved prediction for match ${match._id}`);
+      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Successfully generated and saved prediction for match ${match._id}`);
 
     } catch (error) {
       if (error instanceof ZodError) {
@@ -112,7 +111,7 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
         .sort({ matchDateUtc: 1 })
         .lean({ virtuals: true });
 
-        return sanitizeObject(finalMatches);
+        return sanitizeObject<Match[]>(finalMatches);
     }
 
     const matchesWithPredictions = await MatchModel.find({
@@ -125,7 +124,7 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     .lean({ virtuals: true });
 
 
-    return sanitizeObject(matchesWithPredictions);
+    return sanitizeObject<Match[]>(matchesWithPredictions);
 }
 
 export async function getAllMatches(): Promise<Match[]> {
@@ -139,5 +138,5 @@ export async function getAllMatches(): Promise<Match[]> {
         .limit(200)
         .lean({ virtuals: true });
 
-    return sanitizeObject(allMatches);
+    return sanitizeObject<Match[]>(allMatches);
 }
