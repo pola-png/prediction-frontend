@@ -13,6 +13,8 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
   const matchesWithPredictions: Match[] = [];
 
   for (const match of matches) {
+    // This match object is already a lean object, but we might be re-populating it later.
+    // The core check `if (match.prediction)` still works.
     if (match.prediction) {
       matchesWithPredictions.push(match);
       continue;
@@ -53,13 +55,14 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
 
       await MatchModel.findByIdAndUpdate(match._id, { prediction: savedPrediction._id });
 
+      // Convert the newly created prediction to a plain object before attaching it.
       const fullPrediction: Prediction = savedPrediction.toObject({ virtuals: true });
       const fullMatch = { ...match, prediction: fullPrediction };
       matchesWithPredictions.push(fullMatch);
       
     } catch (error) {
       console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
-      matchesWithPredictions.push(match);
+      matchesWithPredictions.push(match); // Push original match if prediction fails
     }
   }
 
@@ -70,7 +73,7 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
 export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     await dbConnect();
 
-    const upcomingMatches = await MatchModel.find({
+    const upcomingMatches: Match[] = await MatchModel.find({
         status: 'scheduled',
         matchDateUtc: { $gte: new Date() }
     })
@@ -79,15 +82,25 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     .populate('prediction')
     .sort({ matchDateUtc: 1 })
     .limit(limit)
-    .lean();
+    .lean(); // <-- This is the crucial fix!
 
+    // Now that we have lean objects, we can process them.
     const matchesToPredict = upcomingMatches.filter(m => !m.prediction);
-    const predictions = await getAndGeneratePredictions(matchesToPredict);
+    
+    if (matchesToPredict.length > 0) {
+        const predictions = await getAndGeneratePredictions(matchesToPredict);
+        // Create a map of predictions by match ID for easy lookup
+        const predictionMap = new Map(predictions.map(p => [p._id.toString(), p.prediction]));
 
-    const allMatches = upcomingMatches.map(match => {
-        const prediction = predictions.find(p => p._id.toString() === match._id.toString());
-        return prediction ? prediction : match;
-    }) as Match[];
+        // Merge the new predictions back into the original list
+        const allMatches = upcomingMatches.map(match => {
+            if (predictionMap.has(match._id.toString())) {
+                return { ...match, prediction: predictionMap.get(match._id.toString()) };
+            }
+            return match;
+        });
+        return allMatches as Match[];
+    }
 
-    return allMatches;
+    return upcomingMatches;
 }
