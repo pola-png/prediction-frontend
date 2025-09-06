@@ -46,12 +46,7 @@ export async function getMatchStats(match: Match): Promise<MatchStats> {
     );
     
     if (historicalMatches.length === 0) {
-        console.warn(`No historical matches found for ${match.homeTeam.name} vs ${match.awayTeam.name}. Proceeding with empty stats.`);
-        return {
-            teamA: { form: 'No recent matches', goals: '0' },
-            teamB: { form: 'No recent matches', goals: '0' },
-            h2h: 'No head-to-head history'
-        };
+        throw new Error(`No historical matches found for ${match.homeTeam.name} vs ${match.awayTeam.name}.`);
     }
 
     const input: CalculateMatchStatsInput = {

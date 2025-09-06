@@ -33,8 +33,12 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
       console.log(` -> Fetching stats...`);
       stats = await getMatchStats(match);
     } catch (error: any) {
-      console.error(`[ERROR] ${matchIdentifier} - Failed to get match stats. Raw error:`, error);
-      if (error.cause) console.error('Error cause:', error.cause);
+      if (error.message.includes('No historical matches found')) {
+        console.warn(`[SKIP] ${matchIdentifier} - Skipping prediction due to insufficient historical data.`);
+      } else {
+        console.error(`[ERROR] ${matchIdentifier} - Failed to get match stats. Raw error:`, error);
+        if (error.cause) console.error('Error cause:', error.cause);
+      }
       continue;
     }
 
