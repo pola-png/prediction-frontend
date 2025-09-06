@@ -86,6 +86,7 @@ async function main() {
         'TheSportsDB',
         async () => {
             try {
+                // Correct URL format: /api/v1/json/{API_KEY}/{ENDPOINT}
                 const response = await fetch(`${THESPORTSDB_BASE_URL}/eventsday.php?d=${today}&s=Soccer`);
                 if (response.ok) {
                     const data = await response.json();
@@ -125,9 +126,11 @@ async function main() {
         'OpenLigaDB',
         async () => {
              try {
+                // Correct endpoint, as /getmatchesbydate does not exist.
                 const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}`);
                 if (response.ok) {
                     const data: OpenligaDBMatch[] = await response.json();
+                    // Filter for matches that are not finished yet.
                     return data.filter(m => !m.matchIsFinished);
                 } else {
                      console.warn(`OpenLigaDB API request failed for date ${today} with status: ${response.status}`);
