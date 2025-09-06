@@ -5,26 +5,14 @@
  * @fileOverview An AI agent for determining the optimal parameters for a match prediction model.
  *
  * - getPredictionParameters - A function that returns the weights for various factors in a match prediction.
- * - GetPredictionParametersInput - The input type for the getPredictionParameters function.
- * - PredictionParameters - The return type for the getPredictionParameters function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
 import {
   predictionParametersTool,
-  PredictionParametersSchema,
-  type PredictionParameters,
 } from '@/ai/tools/prediction-params-tool';
+import { GetPredictionParametersInputSchema, PredictionParametersSchema, type GetPredictionParametersInput, type PredictionParameters } from '@/lib/types';
 
-
-const GetPredictionParametersInputSchema = z.object({
-  matchDetails: z.string().describe('Details about the match, including teams, date, and league.'),
-});
-export type GetPredictionParametersInput = z.infer<typeof GetPredictionParametersInputSchema>;
-
-
-export { type PredictionParameters };
 
 export async function getPredictionParameters(input: GetPredictionParametersInput): Promise<PredictionParameters> {
   return getPredictionParametersFlow(input);

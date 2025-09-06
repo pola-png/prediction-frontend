@@ -6,13 +6,14 @@ import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 import PredictionModel from '@/models/Prediction';
+import HistoryModel from '@/models/History';
 import { generateMatchPredictions, type GenerateMatchPredictionsInput } from '@/ai/flows/generate-match-predictions';
 import { getMatchStats, type MatchStats } from '@/services/match-stats-service';
 import { getPredictionParameters, type GetPredictionParametersInput, type PredictionParameters } from '@/ai/flows/get-prediction-parameters';
 import { ZodError } from 'zod';
 import { sanitizeObject } from '@/lib/utils';
 
-const PREDICTION_VERSION = 'v1.3';
+const PREDICTION_VERSION = 'v1.4';
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   console.log(`Starting prediction generation process for ${matches.length} matches. Version: ${PREDICTION_VERSION}`);
@@ -30,7 +31,6 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
     try {
       console.log(` -> Fetching stats...`);
       stats = await getMatchStats(match);
-      console.log(` -> Stats fetched successfully:`, stats);
     } catch (error) {
       console.error(`[ERROR] ${matchIdentifier} - Failed to get match stats:`, error);
       continue; 
@@ -148,4 +148,41 @@ export async function getAllMatches(): Promise<Match[]> {
         .lean({ virtuals: true });
 
     return sanitizeObject<Match[]>(allMatches);
+}
+
+
+export async function getRecentResults(limit = 20): Promise<Match[]> {
+    await dbConnect();
+    // Ensure models are registered
+    const History = HistoryModel;
+    const Match = MatchModel;
+    const Prediction = PredictionModel;
+    const Team = TeamModel;
+
+    const recentResults = await History.find()
+      .sort({ resolvedAt: -1 })
+      .limit(limit)
+      .populate({
+        path: 'matchId',
+        populate: [
+          { path: 'homeTeam' },
+          { path: 'awayTeam' },
+        ]
+      })
+      .populate({
+        path: 'predictionId'
+      })
+      .lean();
+
+      const transformedResults = recentResults.map((history: any) => {
+        const match = history.matchId;
+        if (!match) return null;
+        match.prediction = history.predictionId;
+        match.homeGoals = history.result.homeGoals;
+        match.awayGoals = history.result.awayGoals;
+        match.status = 'finished';
+        return match;
+      }).filter(Boolean); // filter out any null matches
+
+    return sanitizeObject<Match[]>(transformedResults as Match[]);
 }

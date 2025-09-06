@@ -1,23 +1,14 @@
+
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { MatchCard } from '@/components/match-card';
 import type { Match } from '@/lib/types';
-
-async function getRecentResults(): Promise<Match[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/results/recent?limit=20`, { cache: 'no-store' });
-    if (!res.ok) {
-        console.error(`Failed to fetch recent results`);
-        return [];
-    }
-    const results = await res.json();
-    // The API returns history objects; we need to transform them into Match objects.
-    return results;
-}
+import { getRecentResults } from '@/services/sports-data-service';
 
 
 export default async function ResultsPage() {
-  const recentMatches = await getRecentResults();
+  const recentMatches = await getRecentResults(20);
 
   return (
     <SidebarProvider>

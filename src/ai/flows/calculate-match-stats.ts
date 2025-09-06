@@ -5,38 +5,10 @@
  * @fileOverview An AI agent for calculating match statistics from historical data.
  *
  * - calculateMatchStats - A function that takes historical match data and returns key statistics.
- * - CalculateMatchStatsInput - The input type for the calculateMatchStats function.
- * - CalculateMatchStatsOutput - The return type for the calculateMatchStats function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const MatchRecordSchema = z.object({
-    date: z.string().describe("The date of the match."),
-    homeTeam: z.string().describe("The name of the home team."),
-    awayTeam: z.string().describe("The name of the away team."),
-    homeGoals: z.number().describe("Goals scored by the home team."),
-    awayGoals: z.number().describe("Goals scored by the away team."),
-});
-
-
-const CalculateMatchStatsInputSchema = z.object({
-  teamAName: z.string().describe('The name of the first primary team (Team A).'),
-  teamBName: z.string().describe('The name of the second primary team (Team B).'),
-  matches: z.array(MatchRecordSchema).describe('A list of recent historical matches involving either team.'),
-});
-export type CalculateMatchStatsInput = z.infer<typeof CalculateMatchStatsInputSchema>;
-
-
-const CalculateMatchStatsOutputSchema = z.object({
-  teamAForm: z.string().describe("A summary of Team A's recent form (e.g., WWLDW)."),
-  teamBForm: z.string().describe("A summary of Team B's recent form (e.g., DLLWW)."),
-  headToHeadStats: z.string().describe('A summary of the head-to-head results between the two teams.'),
-  teamAGoals: z.string().describe("The average number of goals Team A has scored in their recent matches."),
-  teamBGoals: z.string().describe("The average number of goals Team B has scored in their recent matches."),
-});
-export type CalculateMatchStatsOutput = z.infer<typeof CalculateMatchStatsOutputSchema>;
+import { CalculateMatchStatsInputSchema, CalculateMatchStatsOutputSchema, type CalculateMatchStatsInput, type CalculateMatchStatsOutput } from '@/lib/types';
 
 
 export async function calculateMatchStats(input: CalculateMatchStatsInput): Promise<CalculateMatchStatsOutput> {

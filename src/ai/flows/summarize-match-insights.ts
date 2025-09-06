@@ -1,45 +1,15 @@
+
 'use server';
 
 /**
  * @fileOverview A GenAI-powered summary of key insights and factors influencing a specific match prediction.
  *
  * - summarizeMatchInsights - A function that handles the match insights summarization process.
- * - SummarizeMatchInsightsInput - The input type for the summarizeMatchInsights function.
- * - SummarizeMatchInsightsOutput - The return type for the summarizeMatchInsights function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'zod';
+import { SummarizeMatchInsightsInputSchema, SummarizeMatchInsightsOutputSchema, type SummarizeMatchInsightsInput, type SummarizeMatchInsightsOutput } from '@/lib/types';
 
-const SummarizeMatchInsightsInputSchema = z.object({
-  matchId: z.string().describe('The ID of the match to summarize.'),
-  homeTeamName: z.string().describe('The name of the home team.'),
-  awayTeamName: z.string().describe('The name of the away team.'),
-  prediction: z.object({
-    oneXTwo: z.object({
-      home: z.number(),
-      draw: z.number(),
-      away: z.number(),
-    }).describe('Probabilities for home win, draw, and away win.'),
-    over15: z.number().describe('Probability for over 1.5 goals.'),
-    over25: z.number().describe('Probability for over 2.5 goals.'),
-    bttsYes: z.number().describe('Probability for both teams to score.'),
-    correctScoreRange: z.string().describe('The most likely correct score range.'),
-  }).describe('The prediction for the match.'),
-  features: z.object({
-    teamFormWeight: z.number(),
-    h2hWeight: z.number(),
-    homeAdvWeight: z.number(),
-    goalsWeight: z.number(),
-    injuriesWeight: z.number().optional(),
-  }).describe('Weights of the features used in the prediction.'),
-});
-export type SummarizeMatchInsightsInput = z.infer<typeof SummarizeMatchInsightsInputSchema>;
-
-const SummarizeMatchInsightsOutputSchema = z.object({
-  summary: z.string().describe('A summary of the key insights and factors influencing the match prediction.'),
-});
-export type SummarizeMatchInsightsOutput = z.infer<typeof SummarizeMatchInsightsOutputSchema>;
 
 export async function summarizeMatchInsights(input: SummarizeMatchInsightsInput): Promise<SummarizeMatchInsightsOutput> {
   return summarizeMatchInsightsFlow(input);
@@ -86,6 +56,9 @@ const summarizeMatchInsightsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('AI failed to generate match insights. The prompt returned null.');
+    }
     return output!;
   }
 );
