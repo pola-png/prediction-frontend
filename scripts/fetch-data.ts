@@ -92,8 +92,9 @@ async function main() {
                     if (data.events) {
                          const upcomingEvents = data.events.filter((event: TheSportsDBEvent) => {
                              const eventTime = event.strTime || '00:00:00';
+                             // TheSportsDB times are often localized, assuming UTC for safety
                              const eventDateTime = new Date(`${event.dateEvent}T${eventTime}Z`);
-                             return eventDateTime > new Date(Date.now() - 2 * 60 * 60 * 1000);
+                             return eventDateTime > new Date(Date.now() - 2 * 60 * 60 * 1000); // Check for matches that started in the last 2 hours
                          });
                          return upcomingEvents;
                     }
