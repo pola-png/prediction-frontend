@@ -12,7 +12,6 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { getMatchSummary } from '@/app/actions';
@@ -92,10 +91,6 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-4">
              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={match.homeTeam.logoUrl} alt={match.homeTeam.name} data-ai-hint="team logo" />
-                    <AvatarFallback>{match.homeTeam.name.substring(0,1)}</AvatarFallback>
-                </Avatar>
                 <span className='text-lg font-semibold'>{match.homeTeam.name}</span>
              </div>
               {match.status === 'finished' ? (
@@ -105,10 +100,6 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
               )}
              <div className="flex items-center gap-2">
                  <span className='text-lg font-semibold'>{match.awayTeam.name}</span>
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={match.awayTeam.logoUrl} alt={match.awayTeam.name} data-ai-hint="team logo" />
-                    <AvatarFallback>{match.awayTeam.name.substring(0,1)}</AvatarFallback>
-                </Avatar>
              </div>
           </DialogTitle>
           <DialogDescription className='text-center'>

@@ -3,7 +3,6 @@
 
 import * as React from 'react';
 import type { Match } from '@/lib/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, CheckCircle2, XCircle } from 'lucide-react';
@@ -63,11 +62,7 @@ export function MatchCard({ match }: { match: Match }) {
     <div className="border rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4 hover:bg-card/60 transition-colors">
       <div className="flex-1 grid grid-cols-[1fr,auto,1fr] items-center gap-2 sm:gap-4 w-full">
         <div className="flex items-center gap-2 sm:gap-4 justify-end">
-          <span className="font-semibold text-right hidden sm:block">{match.homeTeam.name}</span>
-          <Avatar>
-            <AvatarImage src={match.homeTeam.logoUrl} alt={match.homeTeam.name} data-ai-hint="team logo" />
-            <AvatarFallback>{match.homeTeam.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <span className="font-semibold text-right">{match.homeTeam.name}</span>
         </div>
         <div className="text-center">
             {isFinished ? (
@@ -75,19 +70,11 @@ export function MatchCard({ match }: { match: Match }) {
             ) : (
                 <>
                     <span className="font-bold text-lg">vs</span>
-                     <div className="text-xs text-muted-foreground sm:hidden flex flex-col items-center">
-                        <span>{match.homeTeam.name}</span>
-                        <span>{match.awayTeam.name}</span>
-                    </div>
                 </>
             )}
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
-          <Avatar>
-            <AvatarImage src={match.awayTeam.logoUrl} alt={match.awayTeam.name} data-ai-hint="team logo" />
-            <AvatarFallback>{match.awayTeam.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <span className="font-semibold hidden sm:block">{match.awayTeam.name}</span>
+          <span className="font-semibold">{match.awayTeam.name}</span>
         </div>
       </div>
       <div className="w-full sm:w-px sm:h-12 bg-border my-2 sm:my-0" />
