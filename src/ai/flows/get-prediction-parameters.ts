@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   name: 'getPredictionParametersPrompt',
   model: 'gemini-1.5-flash-preview',
   input: {schema: GetPredictionParametersInputSchema},
-  output: {schema: PredictionParametersSchema},
+  output: {schema: z.string().describe('A JSON string representing the prediction parameters.')},
   prompt: `You are a sports data scientist. Your task is to determine the best weights for a football prediction model based on the context of a match.
 
 Analyze the match details provided and decide the importance of each factor. For example:
@@ -46,7 +46,7 @@ The weights must sum to 1.0.
 
 Match Details: {{{matchDetails}}}
 
-Ensure your output is a valid JSON object that conforms to the specified schema.
+Provide your response as a valid JSON string with the keys: "teamFormWeight", "h2hWeight", "homeAdvWeight", "goalsWeight".
 `,
 });
 
@@ -59,8 +59,27 @@ const getPredictionParametersFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
     if (!output) {
-      throw new Error('AI failed to generate prediction parameters. The prompt returned null.');
+      throw new Error('AI failed to generate prediction parameters string. The prompt returned null.');
     }
-    return output!;
+    
+    try {
+      // Clean the output string to ensure it's valid JSON
+      const cleanedOutput = output.replace(/```json\n?|\n?```/g, '').trim();
+      const parsed = JSON.parse(cleanedOutput);
+      
+      // Validate the parsed object against the Zod schema
+      const validatedParams = PredictionParametersSchema.parse(parsed);
+
+      // Optional: Verify the sum of weights
+      const sum = validatedParams.teamFormWeight + validatedParams.h2hWeight + validatedParams.homeAdvWeight + validatedParams.goalsWeight;
+      if (Math.abs(sum - 1.0) > 0.01) {
+          throw new Error(`AI returned weights that do not sum to 1.0. Sum was: ${sum}`);
+      }
+
+      return validatedParams;
+    } catch (e: any) {
+        console.error("Failed to parse or validate AI output for prediction parameters:", output);
+        throw new Error(`Failed to process AI response for prediction parameters: ${e.message}`);
+    }
   }
 );
