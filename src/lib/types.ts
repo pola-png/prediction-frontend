@@ -111,7 +111,7 @@ export const GenerateMatchPredictionsInputSchema = z.object({
   h2hWeight: z.number().describe('Weight for head-to-head stats in prediction.'),
   homeAdvWeight: z.number().describe('Weight for home advantage in prediction.'),
   goalsWeight: z.number().describe('Weight for goals scored in prediction.'),
-  matchDetails: z.string().describe('Details about the match, including teams, date, and league.'),
+  matchDetails: z.string().describe('Details about the, including teams, date, and league.'),
   teamAForm: z.string().describe('Recent form of team A (last 5-10 matches).'),
   teamBForm: z.string().describe('Recent form of team B (last 5-10 matches).'),
   headToHeadStats: z.string().describe('Head-to-head statistics between the two teams.'),
@@ -142,7 +142,7 @@ export const GenerateMatchPredictionsOutputSchema = z.object({
   correctScoreRange: z.string().describe('Most likely correct score range.'),
   halfTimeDraw: z.number().describe('Probability of the match being a draw at half-time (0-1).'),
   confidence: z.number().describe('Confidence level of the prediction (50-100).'),
-  bucket: z.string().describe('The prediction bucket (vip, 2odds, 5odds, big10).'),
+  bucket: z.enum(['vip', '2odds', '5odds', 'big10']).describe('The prediction bucket (vip, 2odds, 5odds, big10).'),
 });
 export type GenerateMatchPredictionsOutput = z.infer<typeof GenerateMatchPredictionsOutputSchema>;
 
@@ -167,7 +167,7 @@ export type PredictionParameters = z.infer<typeof PredictionParametersSchema>;
 export const SummarizeMatchInsightsInputSchema = z.object({
   matchId: z.string().describe('The ID of the match to summarize.'),
   homeTeamName: z.string().describe('The name of the home team.'),
-awayTeamName: z.string().describe('The name of the away team.'),
+  awayTeamName: z.string().describe('The name of the away team.'),
   prediction: z.object({
     oneXTwo: z.object({
       home: z.number(),

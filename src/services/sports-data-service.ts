@@ -14,7 +14,7 @@ import { ZodError } from 'zod';
 import { sanitizeObject } from '@/lib/utils';
 import type { PredictionParameters, GetPredictionParametersInput } from '@/lib/types';
 
-const PREDICTION_VERSION = 'v1.7';
+const PREDICTION_VERSION = 'v1.8';
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   console.log(`Starting prediction generation process for ${matches.length} matches. Version: ${PREDICTION_VERSION}`);
