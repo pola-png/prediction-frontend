@@ -129,3 +129,4 @@ export async function getAllMatches(): Promise<Match[]> {
 
     return sanitizeObject(allMatches);
 }
+
