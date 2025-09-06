@@ -12,7 +12,7 @@ import { getPredictionParameters, type GetPredictionParametersInput, type Predic
 import { ZodError } from 'zod';
 import { sanitizeObject } from '@/lib/utils';
 
-const PREDICTION_VERSION = 'v1.2';
+const PREDICTION_VERSION = 'v1.3';
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   console.log(`Starting prediction generation process for ${matches.length} matches. Version: ${PREDICTION_VERSION}`);
@@ -23,15 +23,16 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
         continue;
     }
 
-    console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] - ID: ${match._id}`);
+    const matchIdentifier = `[${match.homeTeam.name} vs ${match.awayTeam.name}] - ID: ${match._id}`;
+    console.log(matchIdentifier);
 
     let stats: MatchStats;
     try {
       console.log(` -> Fetching stats...`);
       stats = await getMatchStats(match);
-      console.log(` -> Stats fetched successfully.`);
+      console.log(` -> Stats fetched successfully:`, stats);
     } catch (error) {
-      console.error(`[ERROR] Failed to get match stats for match ${match._id}:`, error);
+      console.error(`[ERROR] ${matchIdentifier} - Failed to get match stats:`, error);
       continue; 
     }
 
@@ -44,7 +45,7 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
       parameters = await getPredictionParameters(paramsInput);
        console.log(` -> Parameters fetched:`, parameters);
     } catch (error) {
-      console.error(`[ERROR] Failed to get prediction parameters for match ${match._id}:`, error);
+      console.error(`[ERROR] ${matchIdentifier} - Failed to get prediction parameters:`, error);
       continue;
     }
 
@@ -78,13 +79,13 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
 
       await prediction.save();
       await MatchModel.findByIdAndUpdate(match._id, { prediction: prediction._id });
-      console.log(` -> [SUCCESS] Generated and saved prediction for match ${match._id}`);
+      console.log(` -> [SUCCESS] ${matchIdentifier} - Generated and saved prediction.`);
 
     } catch (error) {
       if (error instanceof ZodError) {
-        console.error(`[ERROR] Zod validation error for match prediction ${match._id}:`, JSON.stringify(error.errors, null, 2));
+        console.error(`[ERROR] ${matchIdentifier} - Zod validation error for match prediction:`, JSON.stringify(error.errors, null, 2));
       } else {
-        console.error(`[ERROR] Failed to generate or save prediction for match ${match._id}:`, error);
+        console.error(`[ERROR] ${matchIdentifier} - Failed to generate or save prediction:`, error);
       }
     }
   }
