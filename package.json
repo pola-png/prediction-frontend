@@ -11,8 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "fetch-data": "tsx scripts/fetch-data.ts",
-    "postinstall": "patch-package"
+    "fetch-data": "tsx scripts/fetch-data.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
@@ -49,7 +48,6 @@
     "lucide-react": "^0.475.0",
     "mongoose": "^8.5.1",
     "next": "15.3.3",
-    "patch-package": "^8.0.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
