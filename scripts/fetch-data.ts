@@ -7,16 +7,6 @@ import TeamModel from '@/models/Team';
 // --- TheSportsDB Integration ---
 const THESPORTSDB_API_KEY = process.env.THESPORTSDB_API_KEY || '1';
 const THESPORTSDB_BASE_URL = `https://www.thesportsdb.com/api/v1/json/${THESPORTSDB_API_KEY}`;
-const THESPORTSDB_LEAGUE_IDS = [
-    '4328', // English Premier League
-    '4335', // Spanish La Liga
-    '4332', // German Bundesliga
-    '4331', // Italian Serie A
-    '4334', // French Ligue 1
-    '4346', // Dutch Eredivisie
-    '4356', // Portuguese Primeira Liga
-    '4329', // English Championship
-];
 
 interface TheSportsDBEvent {
     idEvent: string; strEvent: string; idLeague: string; strLeague: string;
@@ -28,7 +18,6 @@ interface TheSportsDBEvent {
 
 // --- OpenligaDB Integration ---
 const OPENLIGADB_BASE_URL = 'https://api.openligadb.de';
-const OPENLIGADB_LEAGUE_SHORTCUTS = ['bl1', 'bl2', 'bl3'];
 
 interface OpenligaDBMatch {
     matchID: number; matchDateTimeUTC: string; team1: { teamName: string; teamIconUrl: string };
@@ -134,22 +123,19 @@ async function main() {
     await fetchFromSource(
         'OpenLigaDB',
         async () => {
-            let allMatches: OpenligaDBMatch[] = [];
-            for (const league of OPENLIGADB_LEAGUE_SHORTCUTS) {
-                try {
-                    const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatches/${league}`);
-                    if (response.ok) {
-                        const data: OpenligaDBMatch[] = await response.json();
-                        const upcoming = data.filter(m => !m.matchIsFinished);
-                        allMatches.push(...upcoming);
-                    } else {
-                         console.warn(`OpenLigaDB API request failed for league ${league} with status: ${response.status}`);
-                    }
-                } catch (error) {
-                    console.warn(`Could not fetch from OpenligaDB for league ${league}`, error);
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}/${today}`);
+                if (response.ok) {
+                    const data: OpenligaDBMatch[] = await response.json();
+                    return data.filter(m => !m.matchIsFinished);
+                } else {
+                     console.warn(`OpenLigaDB API request failed for date ${today} with status: ${response.status}`);
                 }
+            } catch (error) {
+                console.warn(`Could not fetch from OpenligaDB for date ${today}`, error);
             }
-            return allMatches;
+            return [];
         },
         async (match: OpenligaDBMatch) => {
             if (!match.team1?.teamName || !match.team2?.teamName) return;
