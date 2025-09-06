@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Match } from "@/lib/types";
+import type { Match, Team } from "@/lib/types";
 import MatchModel from "@/models/Match";
 import { calculateMatchStats, type CalculateMatchStatsInput } from "@/ai/flows/calculate-match-stats";
 
@@ -30,8 +30,8 @@ async function getHistoricalMatches(teamAId: string, teamBId: string, cutOffDate
     })
     .sort({ matchDateUtc: -1 })
     .limit(20)
-    .populate('homeTeam')
-    .populate('awayTeam')
+    .populate<{ homeTeam: Team, awayTeam: Team }>('homeTeam')
+    .populate<{ homeTeam: Team, awayTeam: Team }>('awayTeam')
     .lean();
 
     return twentyMatches as Match[];
@@ -46,6 +46,7 @@ export async function getMatchStats(match: Match): Promise<MatchStats> {
     );
     
     if (historicalMatches.length === 0) {
+        console.warn(`No historical matches found for ${match.homeTeam.name} vs ${match.awayTeam.name}. Proceeding with empty stats.`);
         return {
             teamA: { form: 'No recent matches', goals: '0' },
             teamB: { form: 'No recent matches', goals: '0' },
