@@ -6,11 +6,17 @@ import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 
 // --- TheSportsDB Integration ---
-const THESPORTSDB_BASE_URL = 'https://www.thesportsdb.com/api/v1/json/1';
+const THESPORTSDB_API_KEY = process.env.THESPORTSDB_API_KEY || '1';
+const THESPORTSDB_BASE_URL = `https://www.thesportsdb.com/api/v1/json/${THESPORTSDB_API_KEY}`;
 const THESPORTSDB_LEAGUE_IDS = [
-    '4328', '4329', '4330', '4331', '4332', '4334', '4335', '4337',
-    '4338', '4339', '4344', '4346', '4350', '4351', '4355', '4356',
-    '4387', '4388', '4394', '4401', '4655', '4722'
+    '4328', // English Premier League
+    '4335', // Spanish La Liga
+    '4332', // German Bundesliga
+    '4331', // Italian Serie A
+    '4334', // French Ligue 1
+    '4346', // Dutch Eredivisie
+    '4356', // Portuguese Primeira Liga
+    '4329', // English Championship
 ];
 
 interface TheSportsDBEvent {
@@ -28,7 +34,7 @@ const OPENLIGADB_LEAGUE_SHORTCUTS = ['bl1', 'bl2', 'bl3'];
 interface OpenligaDBMatch {
     matchID: number; matchDateTimeUTC: string; team1: { teamName: string; teamIconUrl: string };
     team2: { teamName: string; teamIconUrl: string }; leagueId: number;
-    leagueName: string; leagueSeason: string; matchResults: { resultID: number; pointsTeam1: number; pointsTeam2: number }[];
+    leagueName: string; leagueSeason: string; matchIsFinished: boolean; matchResults: { resultID: number; pointsTeam1: number; pointsTeam2: number }[];
 }
 
 const teamCache = new Map<string, any>();
@@ -70,6 +76,10 @@ async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, tran
     console.log(`Fetching from ${name}...`);
     try {
         const items = await fetchFn();
+        if (!items || items.length === 0) {
+            console.log(`No items found from ${name}.`);
+            return;
+        }
         for (const item of items) {
             await transformFn(item);
         }
@@ -88,22 +98,29 @@ async function main() {
             let allEvents: TheSportsDBEvent[] = [];
             for (const leagueId of THESPORTSDB_LEAGUE_IDS) {
                 try {
+                    // Fetch current season's events for the league
                     const response = await fetch(`${THESPORTSDB_BASE_URL}/eventsnextleague.php?id=${leagueId}`);
                     if (response.ok) {
                         const data = await response.json();
-                        if (data.events) allEvents.push(...data.events);
+                        if (data.events) {
+                             const upcomingEvents = data.events.filter((event: TheSportsDBEvent) => new Date(`${event.dateEvent}T${event.strTime || '00:00:00'}Z`) > new Date());
+                             allEvents.push(...upcomingEvents);
+                        }
+                    } else {
+                        console.warn(`TheSportsDB API request failed for league ${leagueId} with status: ${response.status}`);
                     }
                 } catch (error) {
-                    console.warn(`Could not fetch from TheSportsDB for league ${leagueId}`);
+                    console.warn(`Could not fetch from TheSportsDB for league ${leagueId}`, error);
                 }
             }
             return allEvents;
         },
         async (event: TheSportsDBEvent) => {
+            if (!event.strHomeTeam || !event.strAwayTeam) return;
             const matchData: Partial<Match> = {
                 source: 'footballjson',
                 externalId: event.idEvent,
-                leagueCode: event.idLeague,
+                leagueCode: event.strLeague,
                 season: event.strSeason.split('-')[0],
                 matchDateUtc: new Date(`${event.dateEvent}T${event.strTime || '00:00:00'}Z`).toISOString(),
                 homeTeam: { name: event.strHomeTeam, logoUrl: event.strHomeTeamBadge } as Team,
@@ -117,22 +134,24 @@ async function main() {
         'OpenLigaDB',
         async () => {
             let allMatches: OpenligaDBMatch[] = [];
-            const now = new Date();
             for (const league of OPENLIGADB_LEAGUE_SHORTCUTS) {
                 try {
-                    const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchdata/${league}`);
+                    const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatches/${league}`);
                     if (response.ok) {
                         const data: OpenligaDBMatch[] = await response.json();
-                        const upcoming = data.filter(m => new Date(m.matchDateTimeUTC) > now && !m.matchResults.some(r => r.resultID !== 0));
+                        const upcoming = data.filter(m => !m.matchIsFinished);
                         allMatches.push(...upcoming);
+                    } else {
+                         console.warn(`OpenLigaDB API request failed for league ${league} with status: ${response.status}`);
                     }
                 } catch (error) {
-                    console.warn(`Could not fetch from OpenligaDB for league ${league}`);
+                    console.warn(`Could not fetch from OpenligaDB for league ${league}`, error);
                 }
             }
             return allMatches;
         },
         async (match: OpenligaDBMatch) => {
+            if (!match.team1?.teamName || !match.team2?.teamName) return;
             const matchData: Partial<Match> = {
                 source: 'openligadb',
                 externalId: match.matchID.toString(),
