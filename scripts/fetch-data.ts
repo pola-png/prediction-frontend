@@ -6,7 +6,7 @@ import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 
 // --- TheSportsDB Integration ---
-const THESPORTSDB_API_KEY = process.env.THESPORTSDB_API_KEY || '1';
+const THESPORTSDB_API_KEY = process.env.THESPORTSDB_API_KEY || '3'; // Use '3' as it's a common example key
 const THESPORTSDB_BASE_URL = `https://www.thesportsdb.com/api/v1/json/${THESPORTSDB_API_KEY}`;
 
 interface TheSportsDBEvent {
@@ -24,6 +24,13 @@ interface OpenligaDBMatch {
     matchID: number; matchDateTimeUTC: string; team1: { teamName: string; teamIconUrl: string };
     team2: { teamName: string; teamIconUrl: string }; leagueId: number;
     leagueName: string; leagueSeason: string; matchIsFinished: boolean; matchResults: { resultID: number; pointsTeam1: number; pointsTeam2: number }[];
+}
+
+interface OpenLigaDBLeague {
+    leagueId: number;
+    leagueName: string;
+    leagueShortcut: string;
+    leagueSeason: string;
 }
 
 const teamCache = new Map<string, any>();
@@ -80,11 +87,11 @@ async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, tran
 
 async function main() {
     await dbConnect();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
     await fetchFromSource(
         'TheSportsDB',
         async () => {
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
             try {
                 const response = await fetch(`${THESPORTSDB_BASE_URL}/eventsday.php?d=${today}&s=Soccer`);
                 if (response.ok) {
@@ -93,7 +100,6 @@ async function main() {
                          const upcomingEvents = data.events.filter((event: TheSportsDBEvent) => {
                              const eventTime = event.strTime || '00:00:00';
                              const eventDateTime = new Date(`${event.dateEvent}T${eventTime}Z`);
-                             // Check if event is in the future. Add a 2-hour buffer for games that may have started but not updated.
                              return eventDateTime > new Date(Date.now() - 2 * 60 * 60 * 1000);
                          });
                          return upcomingEvents;
@@ -104,7 +110,7 @@ async function main() {
             } catch (error) {
                 console.warn(`Could not fetch from TheSportsDB`, error);
             }
-            return []; // Return empty array on failure
+            return [];
         },
         async (event: TheSportsDBEvent) => {
             if (!event.strHomeTeam || !event.strAwayTeam) return;
@@ -124,8 +130,7 @@ async function main() {
     await fetchFromSource(
         'OpenLigaDB',
         async () => {
-            const today = new Date().toISOString().split('T')[0];
-            try {
+             try {
                 const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}`);
                 if (response.ok) {
                     const data: OpenligaDBMatch[] = await response.json();
