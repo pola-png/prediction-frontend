@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { AppSidebar } from '@/components/app-sidebar';
+import { getMatchesForBucket } from '@/services/predictions-service';
 
 
 const predictionBuckets = [
@@ -49,13 +50,8 @@ async function getBucketCounts() {
   const counts: Record<string, number> = {};
 
   for (const bucket of buckets) {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/predictions?bucket=${bucket}&limit=100`, { cache: 'no-store' });
-      if (res.ok) {
-          const data = await res.json();
-          counts[bucket] = data.length;
-      } else {
-          counts[bucket] = 0;
-      }
+      const matches = await getMatchesForBucket(bucket, 100);
+      counts[bucket] = matches.length;
   }
   return counts;
 }

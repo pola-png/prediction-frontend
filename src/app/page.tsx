@@ -13,9 +13,9 @@ import {
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { AppSidebar } from '@/components/app-sidebar';
-import type { Match } from '@/lib/types';
 import { MatchCard } from '@/components/match-card';
 import { getUpcomingMatches } from '@/services/sports-data-service';
+import { getMatchesForBucket } from '@/services/predictions-service';
 
 
 const predictionBuckets = [
@@ -52,15 +52,9 @@ const predictionBuckets = [
 async function getBucketCounts() {
   const buckets = ['vip', '2odds', '5odds', 'big10'];
   const counts: Record<string, number> = {};
-
   for (const bucket of buckets) {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/predictions?bucket=${bucket}&limit=100`, { cache: 'no-store' });
-      if (res.ok) {
-          const data = await res.json();
-          counts[bucket] = data.length;
-      } else {
-          counts[bucket] = 0;
-      }
+      const matches = await getMatchesForBucket(bucket, 100);
+      counts[bucket] = matches.length;
   }
   return counts;
 }
