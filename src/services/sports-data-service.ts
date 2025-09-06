@@ -29,7 +29,7 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
         h2hWeight: 0.3,
         homeAdvWeight: 0.2,
         goalsWeight: 0.1,
-        matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} on ${match.matchDateUtc}`,
+        matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} on ${match.matchDateUtc} in the ${match.leagueCode}`,
         teamAForm: 'Not available',
         teamBForm: 'Not available',
         headToHeadStats: 'Not available',
@@ -63,6 +63,7 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
       
     } catch (error) {
       console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
+      // Still push the match without a prediction if the AI call fails
       matchesWithPredictions.push(match);
     }
   }
@@ -89,6 +90,7 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     let finalMatches = upcomingMatches;
     
     if (matchesToPredict.length > 0) {
+        console.log(`Found ${matchesToPredict.length} matches without predictions. Generating now...`);
         const predictions = await getAndGeneratePredictions(matchesToPredict);
         const predictionMap = new Map(predictions.map(p => [p._id.toString(), p.prediction]));
 
@@ -115,5 +117,22 @@ export async function getAllMatches(): Promise<Match[]> {
         .limit(200)
         .lean({ virtuals: true });
 
-    return sanitizeObject(allMatches);
+    const matchesToPredict = allMatches.filter(m => !m.prediction && m.status === 'scheduled');
+    let finalMatches = allMatches;
+
+    if (matchesToPredict.length > 0) {
+        console.log(`Found ${matchesToPredict.length} matches on debug page without predictions. Generating now...`);
+        const predictions = await getAndGeneratePredictions(matchesToPredict);
+        const predictionMap = new Map(predictions.map(p => [p._id.toString(), p.prediction]));
+
+        finalMatches = allMatches.map(match => {
+            const matchIdStr = match._id.toString();
+            if (predictionMap.has(matchIdStr) && predictionMap.get(matchIdStr)) {
+                return { ...match, prediction: predictionMap.get(matchIdStr) };
+            }
+            return match;
+        }) as Match[];
+    }
+
+    return sanitizeObject(finalMatches);
 }
