@@ -1,5 +1,4 @@
 
-import 'dotenv/config';
 import type { Match, Team } from '@/lib/types';
 import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
@@ -95,25 +94,27 @@ async function main() {
     await fetchFromSource(
         'TheSportsDB',
         async () => {
-            let allEvents: TheSportsDBEvent[] = [];
-            for (const leagueId of THESPORTSDB_LEAGUE_IDS) {
-                try {
-                    // Fetch current season's events for the league
-                    const response = await fetch(`${THESPORTSDB_BASE_URL}/eventsnextleague.php?id=${leagueId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.events) {
-                             const upcomingEvents = data.events.filter((event: TheSportsDBEvent) => new Date(`${event.dateEvent}T${event.strTime || '00:00:00'}Z`) > new Date());
-                             allEvents.push(...upcomingEvents);
-                        }
-                    } else {
-                        console.warn(`TheSportsDB API request failed for league ${leagueId} with status: ${response.status}`);
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            try {
+                const response = await fetch(`${THESPORTSDB_BASE_URL}/eventsday.php?d=${today}&s=Soccer`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.events) {
+                         const upcomingEvents = data.events.filter((event: TheSportsDBEvent) => {
+                             const eventTime = event.strTime || '00:00:00';
+                             const eventDateTime = new Date(`${event.dateEvent}T${eventTime}Z`);
+                             // Check if event is in the future. Add a 2-hour buffer for games that may have started but not updated.
+                             return eventDateTime > new Date(Date.now() - 2 * 60 * 60 * 1000);
+                         });
+                         return upcomingEvents;
                     }
-                } catch (error) {
-                    console.warn(`Could not fetch from TheSportsDB for league ${leagueId}`, error);
+                } else {
+                    console.warn(`TheSportsDB API request failed with status: ${response.status}`);
                 }
+            } catch (error) {
+                console.warn(`Could not fetch from TheSportsDB`, error);
             }
-            return allEvents;
+            return []; // Return empty array on failure
         },
         async (event: TheSportsDBEvent) => {
             if (!event.strHomeTeam || !event.strAwayTeam) return;
