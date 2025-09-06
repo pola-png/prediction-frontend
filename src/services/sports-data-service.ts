@@ -9,11 +9,12 @@ import PredictionModel from '@/models/Prediction';
 import HistoryModel from '@/models/History';
 import { generateMatchPredictions, type GenerateMatchPredictionsInput } from '@/ai/flows/generate-match-predictions';
 import { getMatchStats, type MatchStats } from '@/services/match-stats-service';
-import { getPredictionParameters, type GetPredictionParametersInput, type PredictionParameters } from '@/ai/flows/get-prediction-parameters';
+import { getPredictionParameters } from '@/ai/flows/get-prediction-parameters';
 import { ZodError } from 'zod';
 import { sanitizeObject } from '@/lib/utils';
+import type { PredictionParameters, GetPredictionParametersInput } from '@/lib/types';
 
-const PREDICTION_VERSION = 'v1.4';
+const PREDICTION_VERSION = 'v1.5';
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   console.log(`Starting prediction generation process for ${matches.length} matches. Version: ${PREDICTION_VERSION}`);
@@ -31,9 +32,10 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
     try {
       console.log(` -> Fetching stats...`);
       stats = await getMatchStats(match);
-    } catch (error) {
-      console.error(`[ERROR] ${matchIdentifier} - Failed to get match stats:`, error);
-      continue; 
+    } catch (error: any) {
+      console.error(`[ERROR] ${matchIdentifier} - Failed to get match stats. Raw error:`, error);
+      if (error.cause) console.error('Error cause:', error.cause);
+      continue;
     }
 
     let parameters: PredictionParameters;
@@ -44,8 +46,9 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
       };
       parameters = await getPredictionParameters(paramsInput);
        console.log(` -> Parameters fetched:`, parameters);
-    } catch (error) {
-      console.error(`[ERROR] ${matchIdentifier} - Failed to get prediction parameters:`, error);
+    } catch (error: any) {
+      console.error(`[ERROR] ${matchIdentifier} - Failed to get prediction parameters. Raw error:`, error);
+      if (error.cause) console.error('Error cause:', error.cause);
       continue;
     }
 
@@ -81,11 +84,12 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
       await MatchModel.findByIdAndUpdate(match._id, { prediction: prediction._id });
       console.log(` -> [SUCCESS] ${matchIdentifier} - Generated and saved prediction.`);
 
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
         console.error(`[ERROR] ${matchIdentifier} - Zod validation error for match prediction:`, JSON.stringify(error.errors, null, 2));
       } else {
-        console.error(`[ERROR] ${matchIdentifier} - Failed to generate or save prediction:`, error);
+        console.error(`[ERROR] ${matchIdentifier} - Failed to generate or save prediction. Raw error:`, error);
+        if (error.cause) console.error('Error cause:', error.cause);
       }
     }
   }

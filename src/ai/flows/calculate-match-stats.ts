@@ -12,40 +12,42 @@ import { CalculateMatchStatsInputSchema, CalculateMatchStatsOutputSchema, type C
 
 
 export async function calculateMatchStats(input: CalculateMatchStatsInput): Promise<CalculateMatchStatsOutput> {
-  return calculateMatchStatsFlow(input);
-}
+  const calculateMatchStatsFlow = ai.defineFlow(
+    {
+      name: 'calculateMatchStatsFlow',
+      inputSchema: CalculateMatchStatsInputSchema,
+      outputSchema: CalculateMatchStatsOutputSchema,
+    },
+    async (input) => {
+      const prompt = `
+You are a sports data analyst. Your task is to calculate key statistics for an upcoming match between ${input.teamAName} and ${input.teamBName} based on a list of their recent historical matches.
 
+Analyze the provided match data to determine the following. Your response MUST be a valid JSON object that conforms to the specified schema.
 
-const prompt = ai.definePrompt({
-  name: 'calculateMatchStatsPrompt',
-  model: 'gemini-1.5-flash-preview',
-  input: {schema: CalculateMatchStatsInputSchema},
-  output: {schema: CalculateMatchStatsOutputSchema},
-  prompt: `You are a sports data analyst. Your task is to calculate key statistics for an upcoming match between {{teamAName}} and {{teamBName}} based on a list of their recent historical matches.
+1.  **Team Form**: For both ${input.teamAName} and ${input.teamBName}, determine their form from their last 5 matches. Represent form as a sequence of W (win), D (draw), and L (loss), starting from the most recent match. For example, WWLDW. If a team has fewer than 5 matches, provide the form for the matches available.
 
-Analyze the provided match data to determine the following:
-1.  **Team Form**: For both {{teamAName}} and {{teamBName}}, determine their form from their last 5 matches. Represent form as a sequence of W (win), D (draw), and L (loss), starting from the most recent match. For example, WWLDW.
-2.  **Head-to-Head (H2H)**: Analyze all matches where {{teamAName}} and {{teamBName}} played against each other. Summarize the results (e.g., "3 wins for {{teamAName}}, 1 draw, 2 wins for {{teamBName}}").
-3.  **Average Goals**: Calculate the average goals scored by {{teamAName}} and {{teamBName}} in their respective recent matches from the provided list.
+2.  **Head-to-Head (H2H)**: Analyze all matches where ${input.teamAName} and ${input.teamBName} played against each other. Summarize the results (e.g., "3 wins for ${input.teamAName}, 1 draw, 2 wins for ${input.teamBName}}").
+
+3.  **Average Goals**: Calculate the average goals scored by ${input.teamAName} and ${input.teamBName} in their respective recent matches from the provided list. Provide the result as a string rounded to two decimal places (e.g., "1.50").
 
 Here is the historical match data:
-{{#each matches}}
-- Date: {{this.date}}, {{this.homeTeam}} {{this.homeGoals}} - {{this.awayGoals}} {{this.awayTeam}}
-{{/each}}
-`,
-});
+${input.matches.map(m => `- Date: ${m.date}, ${m.homeTeam} ${m.homeGoals} - ${m.awayGoals} ${m.awayTeam}`).join('\n')}
+`;
 
-const calculateMatchStatsFlow = ai.defineFlow(
-  {
-    name: 'calculateMatchStatsFlow',
-    inputSchema: CalculateMatchStatsInputSchema,
-    outputSchema: CalculateMatchStatsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    if (!output) {
-      throw new Error('AI failed to generate match stats. The prompt returned null.');
+      const llmResponse = await ai.generate({
+        model: 'gemini-1.5-flash-preview',
+        prompt: prompt,
+        output: {
+          schema: CalculateMatchStatsOutputSchema,
+        }
+      });
+      
+      const output = llmResponse.output();
+      if (!output) {
+        throw new Error('AI failed to generate match stats. The prompt returned null.');
+      }
+      return output;
     }
-    return output!;
-  }
-);
+  );
+  return calculateMatchStatsFlow(input);
+}

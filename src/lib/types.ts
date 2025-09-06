@@ -4,7 +4,6 @@ import { z } from 'zod';
 export interface Team {
   _id: string;
   name: string;
-  logoUrl: string;
 }
 
 export interface Match {
@@ -168,7 +167,7 @@ export type PredictionParameters = z.infer<typeof PredictionParametersSchema>;
 export const SummarizeMatchInsightsInputSchema = z.object({
   matchId: z.string().describe('The ID of the match to summarize.'),
   homeTeamName: z.string().describe('The name of the home team.'),
-  awayTeamName: z.string().describe('The name of the away team.'),
+awayTeamName: z.string().describe('The name of the away team.'),
   prediction: z.object({
     oneXTwo: z.object({
       home: z.number(),
