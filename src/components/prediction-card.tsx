@@ -7,6 +7,8 @@ import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 import { getPredictionSummary } from "./match-card";
 import { format } from "date-fns";
+import { PredictionDetailsDialog } from "./prediction-details-dialog";
+import { Button } from "./ui/button";
 
 function getOutcomeOdds(match: Match): number {
     if (!match.prediction) return 1;
@@ -55,9 +57,12 @@ export function PredictionCard({ matches }: { matches: Match[] }) {
                          <div className="text-center text-sm text-muted-foreground mt-2">
                             {format(new Date(match.matchDateUtc), 'EEE, MMM d, HH:mm')}
                          </div>
-                        <div className="text-center mt-2">
+                        <div className="flex items-center justify-center gap-4 mt-2">
                              <Badge variant="secondary">{getPredictionSummary(match)}</Badge>
-                             <span className="ml-2 text-sm font-bold">(@{getOutcomeOdds(match).toFixed(2)})</span>
+                             <span className="text-sm font-bold">(@{getOutcomeOdds(match).toFixed(2)})</span>
+                             <PredictionDetailsDialog match={match}>
+                                <Button variant="outline" size="sm" disabled={!match.prediction}>View Details</Button>
+                            </PredictionDetailsDialog>
                         </div>
                         {index < matches.length - 1 && <Separator className="my-4" />}
                     </div>
