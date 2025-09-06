@@ -6,9 +6,11 @@ import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 import PredictionModel from '@/models/Prediction';
-import HistoryModel from '@/models/History';
 import { generateMatchPredictions, type GenerateMatchPredictionsInput } from '@/ai/flows/generate-match-predictions';
 
+function sanitizeObject<T>(obj: any): T {
+    return JSON.parse(JSON.stringify(obj));
+}
 
 async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
   await dbConnect();
@@ -55,7 +57,7 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
 
       await MatchModel.findByIdAndUpdate(match._id, { prediction: savedPrediction._id });
 
-      const plainPrediction: Prediction = JSON.parse(JSON.stringify(savedPrediction));
+      const plainPrediction: Prediction = sanitizeObject(savedPrediction);
       const fullMatch = { ...match, prediction: plainPrediction };
       matchesWithPredictions.push(fullMatch);
       
@@ -84,20 +86,21 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     .lean({ virtuals: true });
 
     const matchesToPredict = upcomingMatches.filter(m => !m.prediction);
+    let finalMatches = upcomingMatches;
     
     if (matchesToPredict.length > 0) {
         const predictions = await getAndGeneratePredictions(matchesToPredict);
         const predictionMap = new Map(predictions.map(p => [p._id.toString(), p.prediction]));
 
-        const allMatches = upcomingMatches.map(match => {
+        finalMatches = upcomingMatches.map(match => {
             const matchIdStr = match._id.toString();
             if (predictionMap.has(matchIdStr) && predictionMap.get(matchIdStr)) {
                 return { ...match, prediction: predictionMap.get(matchIdStr) };
             }
             return match;
-        });
-        return allMatches as Match[];
+        }) as Match[];
     }
 
-    return upcomingMatches;
+    return sanitizeObject(finalMatches);
 }
+
