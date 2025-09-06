@@ -1,4 +1,5 @@
 
+import 'dotenv/config';
 import type { Match, Team } from '@/lib/types';
 import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
