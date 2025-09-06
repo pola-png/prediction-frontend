@@ -104,3 +104,16 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     return sanitizeObject(finalMatches);
 }
 
+export async function getAllMatches(): Promise<Match[]> {
+    await dbConnect();
+
+    const allMatches: Match[] = await MatchModel.find({})
+        .populate({ path: 'homeTeam', model: TeamModel })
+        .populate({ path: 'awayTeam', model: TeamModel })
+        .populate({ path: 'prediction', model: PredictionModel })
+        .sort({ matchDateUtc: -1 })
+        .limit(200)
+        .lean({ virtuals: true });
+
+    return sanitizeObject(allMatches);
+}
