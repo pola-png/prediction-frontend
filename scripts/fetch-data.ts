@@ -81,19 +81,18 @@ async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, tran
 async function main() {
     await dbConnect();
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const currentYear = new Date().getFullYear();
 
     await fetchFromSource(
         'TheSportsDB',
         async () => {
             try {
-                // Correct URL format: /api/v1/json/{API_KEY}/{ENDPOINT}
                 const response = await fetch(`${THESPORTSDB_BASE_URL}/eventsday.php?d=${today}&s=Soccer`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.events) {
                          const upcomingEvents = data.events.filter((event: TheSportsDBEvent) => {
                              const eventTime = event.strTime || '00:00:00';
-                             // TheSportsDB times are often localized, assuming UTC for safety
                              const eventDateTime = new Date(`${event.dateEvent}T${eventTime}Z`);
                              return eventDateTime > new Date(Date.now() - 2 * 60 * 60 * 1000); // Check for matches that started in the last 2 hours
                          });
@@ -126,11 +125,9 @@ async function main() {
         'OpenLigaDB',
         async () => {
              try {
-                // Correct endpoint, as /getmatchesbydate does not exist.
                 const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}`);
                 if (response.ok) {
                     const data: OpenligaDBMatch[] = await response.json();
-                    // Filter for matches that are not finished yet.
                     return data.filter(m => !m.matchIsFinished);
                 } else {
                      console.warn(`OpenLigaDB API request failed for date ${today} with status: ${response.status}`);
