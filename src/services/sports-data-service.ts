@@ -16,9 +16,7 @@ function sanitizeObject<T>(obj: any): T {
 }
 
 
-async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
-  const matchesWithPredictions: Match[] = [];
-
+async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   for (const match of matches) {
     try {
         console.log(`Generating prediction for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
@@ -55,10 +53,7 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
 
       await prediction.save();
       
-      const updatedMatch = { ...match, prediction: sanitizeObject(prediction) };
       await MatchModel.findByIdAndUpdate(match._id, { prediction: prediction._id });
-
-      matchesWithPredictions.push(updatedMatch);
 
     } catch (error) {
        if (error instanceof ZodError) {
@@ -66,46 +61,44 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
       } else {
         console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
       }
-      matchesWithPredictions.push(match);
     }
   }
-
-  return matchesWithPredictions;
 }
 
 
 export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     await dbConnect();
 
-    const upcomingMatches: Match[] = await MatchModel.find({
+    const initialMatches: Match[] = await MatchModel.find({
         status: 'scheduled',
         matchDateUtc: { $gte: new Date() }
     })
     .populate({ path: 'homeTeam', model: TeamModel })
     .populate({ path: 'awayTeam', model: TeamModel })
-    .populate({ path: 'prediction', model: PredictionModel })
     .sort({ matchDateUtc: 1 })
     .limit(limit)
     .lean({ virtuals: true });
     
-    const matchesToPredict = upcomingMatches.filter(m => !m.prediction);
-    let finalMatches: Match[] = upcomingMatches;
+    const matchesToPredict = initialMatches.filter(m => !m.prediction);
     
     if (matchesToPredict.length > 0) {
         console.log(`Found ${matchesToPredict.length} matches without predictions. Generating now...`);
-        const predictions = await getAndGeneratePredictions(matchesToPredict);
-        const predictionMap = new Map(predictions.map(p => [p._id.toString(), p.prediction]));
+        await getAndGeneratePredictions(matchesToPredict);
+        
+        // Re-fetch all matches to get the newly created predictions
+        const finalMatches: Match[] = await MatchModel.find({
+            _id: { $in: initialMatches.map(m => m._id) }
+        })
+        .populate({ path: 'homeTeam', model: TeamModel })
+        .populate({ path: 'awayTeam', model: TeamModel })
+        .populate({ path: 'prediction', model: PredictionModel })
+        .sort({ matchDateUtc: 1 })
+        .lean({ virtuals: true });
 
-        finalMatches = upcomingMatches.map(match => {
-            const matchIdStr = match._id.toString();
-            if (predictionMap.has(matchIdStr) && predictionMap.get(matchIdStr)) {
-                return { ...match, prediction: predictionMap.get(matchIdStr)! };
-            }
-            return match;
-        }) as Match[];
+        return sanitizeObject(finalMatches);
     }
 
-    return sanitizeObject(finalMatches);
+    return sanitizeObject(initialMatches);
 }
 
 export async function getAllMatches(): Promise<Match[]> {

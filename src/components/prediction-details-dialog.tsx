@@ -46,38 +46,38 @@ const PredictionGridItem = ({ title, value }: { title: string; value: string }) 
 
 
 export function PredictionDetailsDialog({ match, children }: PredictionDetailsDialogProps) {
-    // const [summary, setSummary] = useState<string | null>(null);
-    // const [loading, setLoading] = useState(false);
+    const [summary, setSummary] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
 
-    // useEffect(() => {
-    //     if (open && match.prediction && !summary) {
-    //         setLoading(true);
-    //         const fetchSummary = async () => {
-    //             const result = await getMatchSummary({
-    //                 matchId: match._id,
-    //                 homeTeamName: match.homeTeam.name,
-    //                 awayTeamName: match.awayTeam.name,
-    //                 prediction: {
-    //                     oneXTwo: match.prediction!.outcomes.oneXTwo,
-    //                     over15: match.prediction!.outcomes.over15,
-    //                     over25: match.prediction!.outcomes.over25,
-    //                     bttsYes: match.prediction!.outcomes.bttsYes,
-    //                     correctScoreRange: match.prediction!.outcomes.correctScoreRange,
-    //                 },
-    //                 features: match.prediction!.features,
-    //             });
+    useEffect(() => {
+        if (open && match.prediction && !summary) {
+            setLoading(true);
+            const fetchSummary = async () => {
+                const result = await getMatchSummary({
+                    matchId: match._id,
+                    homeTeamName: match.homeTeam.name,
+                    awayTeamName: match.awayTeam.name,
+                    prediction: {
+                        oneXTwo: match.prediction!.outcomes.oneXTwo,
+                        over15: match.prediction!.outcomes.over15,
+                        over25: match.prediction!.outcomes.over25,
+                        bttsYes: match.prediction!.outcomes.bttsYes,
+                        correctScoreRange: match.prediction!.outcomes.correctScoreRange,
+                    },
+                    features: match.prediction!.features,
+                });
                 
-    //             if (result.error) {
-    //                 setSummary(result.error);
-    //             } else {
-    //                 setSummary(result.summary!);
-    //             }
-    //             setLoading(false);
-    //         };
-    //         fetchSummary();
-    //     }
-    // }, [open, match, summary]);
+                if (result.error) {
+                    setSummary(result.error);
+                } else {
+                    setSummary(result.summary!);
+                }
+                setLoading(false);
+            };
+            fetchSummary();
+        }
+    }, [open, match, summary]);
 
     if (!match.prediction) {
         return <>{children}</>;
@@ -169,7 +169,7 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
               </div>
             </div>
 
-            {/* <Separator />
+            <Separator />
             
             <div>
                  <Alert>
@@ -185,7 +185,7 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
                         {summary && !loading && <p className='leading-relaxed'>{summary}</p>}
                     </AlertDescription>
                 </Alert>
-            </div> */}
+            </div>
 
             <div className="text-center">
                 <Badge variant="outline" className="text-base px-4 py-1">{match.prediction.bucket}</Badge>
