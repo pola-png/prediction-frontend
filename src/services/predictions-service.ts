@@ -20,11 +20,12 @@ export async function getMatchesForBucket(bucket: string, limit = 10) {
     const predictions = await Prediction.find({ bucket: bucket }).select('_id matchId').lean();
     const matchIds = predictions.map(p => p.matchId);
 
-    // 2. Find upcoming matches that correspond to those predictions
+    // 2. Find upcoming matches that correspond to those predictions and have a prediction linked
     const matches = await Match.find({
       _id: { $in: matchIds },
       status: 'scheduled',
-      matchDateUtc: { $gte: new Date() }
+      matchDateUtc: { $gte: new Date() },
+      prediction: { $exists: true, $ne: null } // <-- Ensure prediction exists
     })
     .populate('homeTeam')
     .populate('awayTeam')
