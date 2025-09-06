@@ -1,3 +1,4 @@
+
 import 'dotenv/config';
 import type { Match, Team } from '@/lib/types';
 import MatchModel from '@/models/Match';
@@ -125,7 +126,7 @@ async function main() {
         async () => {
             const today = new Date().toISOString().split('T')[0];
             try {
-                const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}/${today}`);
+                const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}`);
                 if (response.ok) {
                     const data: OpenligaDBMatch[] = await response.json();
                     return data.filter(m => !m.matchIsFinished);
