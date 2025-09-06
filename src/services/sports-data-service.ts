@@ -58,14 +58,16 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
 
       const savedPrediction = await newPrediction.save();
 
-      await MatchModel.findByIdAndUpdate(match._id, { prediction: savedPrediction._id });
-
       const plainPrediction: Prediction = sanitizeObject(savedPrediction);
       const fullMatch = { ...match, prediction: plainPrediction };
       matchesWithPredictions.push(fullMatch);
       
     } catch (error) {
-      console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
+      if (error instanceof ZodError) {
+        console.error(`Validation error for match ${match._id}:`, JSON.stringify(error.errors, null, 2));
+      } else {
+        console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
+      }
       matchesWithPredictions.push(match);
     }
   }
