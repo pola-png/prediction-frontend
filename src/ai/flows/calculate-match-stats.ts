@@ -52,7 +52,7 @@ const prompt = ai.definePrompt({
   prompt: `You are a sports data analyst. Your task is to calculate key statistics for an upcoming match between {{teamAName}} and {{teamBName}} based on a list of their recent historical matches.
 
 Analyze the provided match data to determine the following:
-1.  **Team Form**: For both {{teamAName}} and {{teamBName}}, determine their form from their last 5 matches. Represent form as a sequence of W (win), D (draw), and L (loss). For example, WWLDW.
+1.  **Team Form**: For both {{teamAName}} and {{teamBName}}, determine their form from their last 5 matches. Represent form as a sequence of W (win), D (draw), and L (loss), starting from the most recent match. For example, WWLDW.
 2.  **Head-to-Head (H2H)**: Analyze all matches where {{teamAName}} and {{teamBName}} played against each other. Summarize the results (e.g., "3 wins for {{teamAName}}, 1 draw, 2 wins for {{teamBName}}").
 3.  **Average Goals**: Calculate the average goals scored by {{teamAName}} and {{teamBName}} in their respective recent matches from the provided list.
 
