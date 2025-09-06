@@ -127,12 +127,13 @@ async function main() {
                     case 'not_started': return 'scheduled';
                     case 'inplay': return 'in-progress';
                     case 'finished': return 'finished';
-                    default: return 'scheduled';
+                    default: 'scheduled';
                 }
+                return 'scheduled'; // Fallback
             }
 
             const matchData: Partial<Match> = {
-                source: 'footballjson', // Keep source consistent for now
+                source: 'soccerdataapi',
                 externalId: match.id.toString(),
                 leagueCode: match.league_name,
                 season: new Date().getFullYear().toString(), // API doesn't provide season here

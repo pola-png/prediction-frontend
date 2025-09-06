@@ -7,7 +7,7 @@ export interface Team {
 
 export interface Match {
   _id: string;
-  source: 'footballjson' | 'openligadb';
+  source: 'footballjson' | 'openligadb' | 'soccerdataapi';
   externalId: string;
   leagueCode: string;
   season: string;
