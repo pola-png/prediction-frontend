@@ -45,6 +45,8 @@ Analyze the match details provided and decide the importance of each factor. For
 The weights must sum to 1.0.
 
 Match Details: {{{matchDetails}}}
+
+Ensure your output is a valid JSON object that conforms to the specified schema.
 `,
 });
 
