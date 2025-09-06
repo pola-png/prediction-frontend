@@ -31,7 +31,7 @@ export async function getPredictionParameters(input: GetPredictionParametersInpu
 
 const prompt = ai.definePrompt({
   name: 'getPredictionParametersPrompt',
-  model: 'googleai/gemini-1.5-flash-preview',
+  model: 'gemini-1.5-flash-preview',
   input: {schema: GetPredictionParametersInputSchema},
   output: {schema: PredictionParametersSchema},
   prompt: `You are a sports data scientist. Your task is to determine the best weights for a football prediction model based on the context of a match.

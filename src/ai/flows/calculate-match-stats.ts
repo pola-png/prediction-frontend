@@ -46,7 +46,7 @@ export async function calculateMatchStats(input: CalculateMatchStatsInput): Prom
 
 const prompt = ai.definePrompt({
   name: 'calculateMatchStatsPrompt',
-  model: 'googleai/gemini-1.5-flash-preview',
+  model: 'gemini-1.5-flash-preview',
   input: {schema: CalculateMatchStatsInputSchema},
   output: {schema: CalculateMatchStatsOutputSchema},
   prompt: `You are a sports data analyst. Your task is to calculate key statistics for an upcoming match between {{teamAName}} and {{teamBName}} based on a list of their recent historical matches.

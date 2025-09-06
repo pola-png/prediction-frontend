@@ -47,7 +47,7 @@ export async function summarizeMatchInsights(input: SummarizeMatchInsightsInput)
 
 const prompt = ai.definePrompt({
   name: 'summarizeMatchInsightsPrompt',
-  model: 'googleai/gemini-1.5-flash-preview',
+  model: 'gemini-1.5-flash-preview',
   input: {
     schema: SummarizeMatchInsightsInputSchema,
   },

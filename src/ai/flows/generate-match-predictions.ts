@@ -58,7 +58,7 @@ export async function generateMatchPredictions(input: GenerateMatchPredictionsIn
 
 const prompt = ai.definePrompt({
   name: 'generateMatchPredictionsPrompt',
-  model: 'googleai/gemini-1.5-flash-preview',
+  model: 'gemini-1.5-flash-preview',
   input: {schema: GenerateMatchPredictionsInputSchema},
   output: {schema: GenerateMatchPredictionsOutputSchema},
   prompt: `You are an expert sports analyst specializing in football (soccer) match predictions. Based on the provided information, generate the most likely outcomes for the match.
