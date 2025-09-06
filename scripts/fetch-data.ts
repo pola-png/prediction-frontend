@@ -5,28 +5,8 @@ import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 
-// --- TheSportsDB Integration ---
-const THESPORTSDB_API_KEY = process.env.THESPORTSDB_API_KEY || '3'; // Use '3' as a more capable free key
-const THESPORTSDB_BASE_URL = `https://www.thesportsdb.com/api/v1/json/${THESPORTSDB_API_KEY}`;
-const THE_SPORTS_DB_LEAGUES = [
-    '4328', // English Premier League
-    '4335', // Spanish La Liga
-    '4332', // German Bundesliga
-    '4331', // Italian Serie A
-    '4334', // French Ligue 1
-];
-
-interface TheSportsDBEvent {
-    idEvent: string; strEvent: string; idLeague: string; strLeague: string;
-    strSeason: string; dateEvent: string; strTime: string; idHomeTeam: string;
-    strHomeTeam: string; idAwayTeam: string; strAwayTeam: string;
-    intHomeScore: string | null; intAwayScore: string | null; strStatus: string;
-    strHomeTeamBadge: string; strAwayTeamBadge: string;
-}
-
 // --- OpenligaDB Integration ---
 const OPENLIGADB_BASE_URL = 'https://api.openligadb.de';
-const OPENLIGA_DB_LEAGUES = ['bl1', 'bl2', 'bl3']; // German Leagues
 
 interface OpenligaDBMatch {
     matchID: number; matchDateTimeUTC: string; team1: { teamName: string; teamIconUrl: string };
@@ -90,43 +70,6 @@ async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, tran
 async function main() {
     await dbConnect();
     const today = new Date().toISOString().split('T')[0];
-
-    // --- Fetch from TheSportsDB ---
-    await fetchFromSource(
-        'TheSportsDB',
-        async () => {
-            let allEvents: TheSportsDBEvent[] = [];
-            for (const leagueId of THE_SPORTS_DB_LEAGUES) {
-                try {
-                    const response = await fetch(`${THESPORTSDB_BASE_URL}/eventsnextleague.php?id=${leagueId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.events) {
-                            allEvents.push(...data.events);
-                        }
-                    } else {
-                        console.warn(`TheSportsDB API request failed for league ${leagueId} with status: ${response.status}`);
-                    }
-                } catch (error) {
-                    console.warn(`Could not fetch from TheSportsDB for league ${leagueId}`, error);
-                }
-            }
-            return allEvents;
-        },
-        async (event: TheSportsDBEvent) => {
-            if (!event.strHomeTeam || !event.strAwayTeam) return;
-            const matchData: Partial<Match> = {
-                source: 'footballjson',
-                externalId: event.idEvent,
-                leagueCode: event.strLeague,
-                season: event.strSeason.split('-')[0],
-                matchDateUtc: new Date(`${event.dateEvent}T${event.strTime || '00:00:00'}Z`).toISOString(),
-                homeTeam: { name: event.strHomeTeam, logoUrl: event.strHomeTeamBadge } as Team,
-                awayTeam: { name: event.strAwayTeam, logoUrl: event.strAwayTeamBadge } as Team,
-            };
-            await updateOrCreateMatch(matchData);
-        }
-    );
 
     // --- Fetch from OpenLigaDB ---
     await fetchFromSource(
