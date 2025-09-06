@@ -3,11 +3,13 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ITeam extends Document {
   name: string;
+  slug: string;
   logoUrl: string;
 }
 
 const TeamSchema = new Schema<ITeam>({
   name: { type: String, required: true, unique: true },
+  slug: { type: String, required: true, unique: true },
   logoUrl: { type: String, required: true },
 }, { timestamps: true });
 

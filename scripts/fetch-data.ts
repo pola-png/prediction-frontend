@@ -4,85 +4,93 @@ import type { Match, Team } from '@/lib/types';
 import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
+import fetch from 'node-fetch';
 
-// --- Soccerdataapi.com Integration ---
-const SOCCERDATA_BASE_URL = 'https://api.soccerdataapi.com';
-const SOCCERDATA_API_KEY = process.env.SOCCERDATA_API_KEY;
+const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/openfootball/football.json/master';
 
-interface SoccerDataMatch {
-    id: number;
-    date: string; // "26/08/2023"
-    time: string; // "00:30"
-    teams: {
-        home: { id: number; name: string };
-        away: { id: number; name: string };
+interface FootballJsonMatch {
+    date: string; // "2023-08-11"
+    team1: string;
+    team2: string;
+    score: {
+        ft: [number, number];
     };
-    status: string; // "finished", "not_started", "inplay"
-    league_id: number;
-    league_name: string;
+    round: string;
 }
 
-interface SoccerDataLeague {
-    league_id: number;
-    league_name: string;
-    matches?: SoccerDataMatch[];
-    stage?: {
-        matches: SoccerDataMatch[];
-    }[];
+interface FootballJsonLeague {
+    name: string;
+    matches: FootballJsonMatch[];
 }
 
 const teamCache = new Map<string, any>();
 
-async function getTeam(teamName: string, logoUrl: string): Promise<any> {
-    if (teamCache.has(teamName)) {
-        return teamCache.get(teamName);
+// Helper function to create a slug from a team name
+function slugify(text: string): string {
+    return text
+        .toString()
+        .toLowerCase()
+        .replace(/\s+/g, '-')       // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')   // Remove all non-word chars
+        .replace(/\-\-+/g, '-')     // Replace multiple - with single -
+        .replace(/^-+/, '')          // Trim - from start of text
+        .replace(/-+$/, '');         // Trim - from end of text
+}
+
+async function getTeam(teamName: string): Promise<any> {
+    const slug = slugify(teamName);
+    if (teamCache.has(slug)) {
+        return teamCache.get(slug);
     }
-    let team = await TeamModel.findOne({ name: teamName });
+    let team = await TeamModel.findOne({ slug: slug });
     if (!team) {
         team = new TeamModel({
             name: teamName,
-            logoUrl: logoUrl || `https://picsum.photos/seed/${teamName.replace(/\s+/g, '')}/40/40`,
+            slug: slug,
+            logoUrl: `https://picsum.photos/seed/${slug}/40/40`,
         });
         await team.save();
         console.log(`Created team: ${teamName}`);
     }
-    teamCache.set(teamName, team);
+    teamCache.set(slug, team);
     return team;
 }
 
-function parseMatchDate(dateStr: string, timeStr: string): Date {
-    // dateStr: "26/08/2023", timeStr: "00:30"
-    const [day, month, year] = dateStr.split('/');
-    const [hours, minutes] = timeStr.split(':');
-    // Note: The month is 0-indexed in JavaScript Dates
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-}
 
 async function updateOrCreateMatch(matchData: Partial<Match>) {
-    const homeTeam = await getTeam(matchData.homeTeam!.name, matchData.homeTeam!.logoUrl);
-    const awayTeam = await getTeam(matchData.awayTeam!.name, matchData.awayTeam!.logoUrl);
+    const homeTeam = await getTeam(matchData.homeTeam!.name);
+    const awayTeam = await getTeam(matchData.awayTeam!.name);
 
     const filter = { source: matchData.source, externalId: matchData.externalId };
     const update = {
         ...matchData,
         homeTeam: homeTeam._id,
         awayTeam: awayTeam._id,
+        status: 'finished' as 'finished', // All historical data is finished
         lastUpdatedAt: new Date(),
     };
 
     await MatchModel.findOneAndUpdate(filter, update, { upsert: true, new: true, setDefaultsOnInsert: true });
 }
 
-async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, transformFn: (item: any) => Promise<void>) {
+async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, transformFn: (item: any, leagueName: string) => Promise<void>) {
     console.log(`Fetching from ${name}...`);
     try {
-        const items = await fetchFn();
-        if (!items || items.length === 0) {
-            console.log(`No items found from ${name}.`);
+        const leagues = await fetchFn();
+        if (!leagues || leagues.length === 0) {
+            console.log(`No leagues found from ${name}.`);
             return;
         }
-        for (const item of items) {
-            await transformFn(item);
+        for (const league of leagues) {
+            const leagueName = league.name;
+            if (!league.matches || league.matches.length === 0) {
+                console.log(`No matches found for league ${leagueName}.`);
+                continue;
+            }
+            console.log(`Processing ${league.matches.length} matches for ${leagueName}...`);
+            for (const item of league.matches) {
+                await transformFn(item, leagueName);
+            }
         }
         console.log(`Successfully fetched and processed items from ${name}.`);
     } catch (error) {
@@ -90,72 +98,52 @@ async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, tran
     }
 }
 
+
+const leaguesToFetch = [
+    '2023-24/en.1.json', // English Premier League
+    '2023-24/es.1.json', // Spanish La Liga
+    '2023-24/de.1.json', // German Bundesliga
+    '2023-24/it.1.json', // Italian Serie A
+    '2023-24/fr.1.json', // French Ligue 1
+];
+
 async function main() {
     await dbConnect();
 
     await fetchFromSource(
-        'Soccerdataapi.com',
+        'football.json',
         async () => {
-            if (!SOCCERDATA_API_KEY) {
-                console.error("SOCCERDATA_API_KEY not found in .env file.");
-                return [];
-            }
-            try {
-                const response = await fetch(`${SOCCERDATA_BASE_URL}/livescores/?auth_token=${SOCCERDATA_API_KEY}`, {
-                    headers: { 'Accept-Encoding': 'gzip' }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.detail) {
-                         console.warn(`Soccerdataapi.com API returned an error: ${data.detail}`);
-                         return [];
+            const allLeaguesData = [];
+            for(const leagueFile of leaguesToFetch) {
+                try {
+                    const response = await fetch(`${GITHUB_BASE_URL}/${leagueFile}`);
+                    if (response.ok) {
+                        const data: FootballJsonLeague = await response.json() as FootballJsonLeague;
+                        allLeaguesData.push(data);
+                    } else {
+                        console.warn(`Failed to fetch ${leagueFile}: ${response.statusText}`);
                     }
-                    if (!Array.isArray(data.results)) {
-                        console.warn(`Soccerdataapi.com did not return an array in 'results'. Response:`, JSON.stringify(data, null, 2));
-                        return [];
-                    }
-
-                    // Flatten the matches from all leagues/stages into one array
-                    return data.results.flatMap((league: SoccerDataLeague) => {
-                         if (league.matches) return league.matches;
-                         if (league.stage && Array.isArray(league.stage)) {
-                            return league.stage.flatMap(s => s.matches || []);
-                         }
-                         return [];
-                    });
-                } else {
-                    console.warn(`Soccerdataapi.com API request failed with status: ${response.status}`);
-                    const errorText = await response.text();
-                    console.warn(`Response: ${errorText}`);
+                } catch(error) {
+                    console.error(`Error fetching ${leagueFile}:`, error);
                 }
-            } catch (error) {
-                console.warn(`Could not fetch from Soccerdataapi.com`, error);
             }
-            return [];
+            return allLeaguesData;
         },
-        async (match: SoccerDataMatch) => {
-            if (!match.teams?.home?.name || !match.teams?.away?.name || match.status === 'finished') return;
-            
-            const getStatus = (apiStatus: string): 'scheduled' | 'in-progress' | 'finished' | 'postponed' | 'canceled' => {
-                switch(apiStatus) {
-                    case 'not_started': return 'scheduled';
-                    case 'inplay': return 'in-progress';
-                    case 'finished': return 'finished';
-                    case 'postponed': return 'postponed';
-                    default: 'scheduled';
-                }
-                return 'scheduled'; // Fallback
-            }
+        async (match: FootballJsonMatch, leagueName: string) => {
+            if (!match.team1 || !match.team2 || !match.score) return;
 
             const matchData: Partial<Match> = {
-                source: 'soccerdataapi',
-                externalId: match.id.toString(),
-                leagueCode: match.league_name,
-                season: new Date().getFullYear().toString(), // API doesn't provide season here
-                matchDateUtc: parseMatchDate(match.date, match.time).toISOString(),
-                status: getStatus(match.status),
-                homeTeam: { name: match.teams.home.name, logoUrl: '' } as Team,
-                awayTeam: { name: match.teams.away.name, logoUrl: '' } as Team,
+                source: 'footballjson',
+                // create a unique ID based on date and teams
+                externalId: `${match.date}-${slugify(match.team1)}-${slugify(match.team2)}`, 
+                leagueCode: leagueName,
+                season: '2023/2024',
+                matchDateUtc: new Date(match.date).toISOString(),
+                status: 'finished',
+                homeTeam: { name: match.team1 } as Team,
+                awayTeam: { name: match.team2 } as Team,
+                homeGoals: match.score.ft[0],
+                awayGoals: match.score.ft[1],
             };
             await updateOrCreateMatch(matchData);
         }
