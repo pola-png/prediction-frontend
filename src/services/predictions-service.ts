@@ -7,6 +7,7 @@ import PredictionModel from "@/models/Prediction";
 import TeamModel from "@/models/Team";
 import type { IPrediction } from '@/models/Prediction';
 import type { Match } from "@/lib/types";
+import { sanitizeObject } from "@/lib/utils";
 
 export async function getMatchesForBucket(bucket: string, limit = 10) {
     await dbConnect();
@@ -34,7 +35,7 @@ export async function getMatchesForBucket(bucket: string, limit = 10) {
     .limit(limit)
     .lean();
 
-    return matches as Match[];
+    return sanitizeObject<Match[]>(matches);
 }
 
 
