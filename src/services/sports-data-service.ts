@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Match } from '@/lib/types';
+import type { Match, Team } from '@/lib/types';
 import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
@@ -14,7 +14,7 @@ import { ZodError } from 'zod';
 import { sanitizeObject } from '@/lib/utils';
 import type { PredictionParameters, GetPredictionParametersInput } from '@/lib/types';
 
-const PREDICTION_VERSION = 'v1.8';
+const PREDICTION_VERSION = 'v1.9';
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   console.log(`Starting prediction generation process for ${matches.length} matches. Version: ${PREDICTION_VERSION}`);
@@ -107,9 +107,42 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     const Team = TeamModel;
     const Prediction = PredictionModel;
 
-    const matchesWithPredictions: Match[] = await MatchModel.find({
+    const upcomingMatches: Match[] = await MatchModel.find({
         status: 'scheduled',
         matchDateUtc: { $gte: new Date() }
+    })
+    .sort({ matchDateUtc: 1 })
+    .limit(limit)
+    .lean({ virtuals: true });
+    
+    const matchesWithoutPrediction = upcomingMatches.filter(m => !m.prediction);
+
+    if (matchesWithoutPrediction.length > 0) {
+        console.log(`Found ${matchesWithoutPrediction.length} upcoming matches without predictions. Generating them now...`);
+        // We need to populate the team data before sending it to the prediction service
+        const matchesToPredict = await MatchModel.find({
+            _id: { $in: matchesWithoutPrediction.map(m => m._id) }
+        }).populate('homeTeam').populate('awayTeam').lean();
+
+        await getAndGeneratePredictions(matchesToPredict);
+
+        // Re-fetch all matches to include the newly generated predictions
+        const matchesWithPredictions: Match[] = await MatchModel.find({
+            _id: { $in: upcomingMatches.map(m => m._id) }
+        })
+        .populate('homeTeam')
+        .populate('awayTeam')
+        .populate('prediction')
+        .sort({ matchDateUtc: 1 })
+        .limit(limit)
+        .lean({ virtuals: true });
+         return sanitizeObject<Match[]>(matchesWithPredictions);
+    }
+
+
+    // If all matches already have predictions, populate them for the initial return
+    const populatedMatches = await MatchModel.find({
+      _id: { $in: upcomingMatches.map(m => m._id) }
     })
     .populate('homeTeam')
     .populate('awayTeam')
@@ -118,7 +151,7 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     .limit(limit)
     .lean({ virtuals: true });
 
-    return sanitizeObject<Match[]>(matchesWithPredictions);
+    return sanitizeObject<Match[]>(populatedMatches);
 }
 
 export async function getAllMatches(): Promise<Match[]> {
@@ -149,13 +182,15 @@ export async function getRecentResults(limit = 20): Promise<Match[]> {
       .limit(limit)
       .populate({
         path: 'matchId',
+        model: Match,
         populate: [
-          { path: 'homeTeam' },
-          { path: 'awayTeam' },
+          { path: 'homeTeam', model: Team },
+          { path: 'awayTeam', model: Team },
         ]
       })
       .populate({
-        path: 'predictionId'
+        path: 'predictionId',
+        model: Prediction,
       })
       .lean();
 

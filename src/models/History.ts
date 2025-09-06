@@ -1,10 +1,12 @@
 
 import mongoose, { Document, Schema, Types } from 'mongoose';
+import type { IMatch } from './Match';
+import type { IPrediction } from './Prediction';
 
 export interface IHistory extends Document {
     _id: Types.ObjectId;
-    matchId: Types.ObjectId;
-    predictionId: Types.ObjectId;
+    matchId: Types.ObjectId | IMatch;
+    predictionId: Types.ObjectId | IPrediction;
     resolvedAt?: Date;
     result: {
         homeGoals?: number;
@@ -48,5 +50,7 @@ const HistorySchema = new Schema<IHistory>({
 }, { timestamps: true });
 
 HistorySchema.index({ matchId: 1, predictionId: 1 });
+HistorySchema.index({ resolvedAt: -1 });
+
 
 export default mongoose.models.History || mongoose.model<IHistory>('History', HistorySchema);

@@ -4,6 +4,7 @@ import { z } from 'zod';
 export interface Team {
   _id: string;
   name: string;
+  logoUrl: string;
 }
 
 export interface Match {
