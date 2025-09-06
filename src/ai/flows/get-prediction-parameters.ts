@@ -24,7 +24,7 @@ export async function getPredictionParameters(input: GetPredictionParametersInpu
     async (input) => {
       const prompt = `You are a sports data scientist. Your task is to determine the best weights for a football prediction model based on the context of a match.
 
-Analyze the match details provided and decide the importance of each factor. Your response MUST be a valid JSON object that conforms to the tool's schema.
+Analyze the match details provided and decide the importance of each factor.
 
 For example:
 - In a derby or rivalry, Head-to-Head (H2H) stats might be more important.
@@ -35,7 +35,7 @@ The weights (teamFormWeight, h2hWeight, homeAdvWeight, goalsWeight) MUST sum to 
 
 Match Details: ${input.matchDetails}
 
-Now, call the predictionParametersTool with the calculated weights.
+Now, call the predictionParametersTool with the calculated weights. Your response MUST be a valid JSON object that conforms to the tool's schema.
 `;
 
       const llmResponse = await ai.generate({
