@@ -25,7 +25,10 @@ interface SoccerDataMatch {
 interface SoccerDataLeague {
     league_id: number;
     league_name: string;
-    matches: SoccerDataMatch[];
+    matches?: SoccerDataMatch[];
+    stage?: {
+        matches: SoccerDataMatch[];
+    }[];
 }
 
 const teamCache = new Map<string, any>();
@@ -107,13 +110,19 @@ async function main() {
                          console.warn(`Soccerdataapi.com API returned an error: ${data.detail}`);
                          return [];
                     }
-                    // The API can return an object on error or an empty array.
-                    if (!Array.isArray(data)) {
-                        console.warn(`Soccerdataapi.com did not return an array. Response:`, JSON.stringify(data, null, 2));
+                    if (!Array.isArray(data.results)) {
+                        console.warn(`Soccerdataapi.com did not return an array in 'results'. Response:`, JSON.stringify(data, null, 2));
                         return [];
                     }
-                    // Flatten the matches from all leagues into one array
-                    return data.flatMap((league: SoccerDataLeague) => league.matches || []);
+
+                    // Flatten the matches from all leagues/stages into one array
+                    return data.results.flatMap((league: SoccerDataLeague) => {
+                         if (league.matches) return league.matches;
+                         if (league.stage && Array.isArray(league.stage)) {
+                            return league.stage.flatMap(s => s.matches || []);
+                         }
+                         return [];
+                    });
                 } else {
                     console.warn(`Soccerdataapi.com API request failed with status: ${response.status}`);
                     const errorText = await response.text();
@@ -132,6 +141,7 @@ async function main() {
                     case 'not_started': return 'scheduled';
                     case 'inplay': return 'in-progress';
                     case 'finished': return 'finished';
+                    case 'postponed': return 'postponed';
                     default: 'scheduled';
                 }
                 return 'scheduled'; // Fallback
