@@ -1,26 +1,44 @@
 diff --git a/node_modules/handlebars/lib/index.js b/node_modules/handlebars/lib/index.js
-index 095f95f..a5493a9 100644
+index 5a539be..c931835 100644
 --- a/node_modules/handlebars/lib/index.js
 +++ b/node_modules/handlebars/lib/index.js
-@@ -1,5 +1,3 @@
--import * as fs from 'fs';
--
- import Handlebars from './handlebars.js';
+@@ -1,5 +1,5 @@
+-import Handlebars from './handlebars.runtime';
+-import 'source-map-support/register';
++// import Handlebars from './handlebars.runtime';
++import Handlebars from './handlebars.runtime.js';
  
- // Environment detection.
-@@ -14,14 +12,4 @@ const deletes = [];
- for (const key in Handlebars) {
-   deletes.push(key);
- }
--
--if (Handlebars.bestContext && !Handlebars.compile) {
--  // We're being loaded via require('./handlebars')
--  Handlebars.JavaScriptCompiler = Object; // eslint-disable-line no-undef
--  Handlebars.precompile = function () {};
--  Handlebars.template = function () {};
--  require.extensions['.handlebars'] = function (module, filename) {
--    const template = fs.readFileSync(filename, 'utf8');
--    module.exports = Handlebars.compile(template);
--  };
--}
- export default Handlebars;
+ // Compiler imports
+ import AST from './handlebars/compiler/ast';
+diff --git a/node_modules/handlebars/lib/index.mjs b/node_modules/handlebars/lib/index.mjs
+index 925c27f..b8d6951 100644
+--- a/node_modules/handlebars/lib/index.mjs
++++ b/node_modules/handlebars/lib/index.mjs
+@@ -1,5 +1,4 @@
+ import Handlebars from './handlebars.runtime.mjs';
+-import 'source-map-support/register.js';
+ 
+ // Compiler imports
+ import AST from './handlebars/compiler/ast.mjs';
+diff --git a/node_modules/handlebars/lib/source-map.js b/node_modules/handlebars/lib/source-map.js
+index 0048467..b24134a 100644
+--- a/node_modules/handlebars/lib/source-map.js
++++ b/node_modules/handlebars/lib/source-map.js
+@@ -1,5 +1,5 @@
+ // Originally from: https://github.com/mozilla/source-map/blob/f65e1c2a8507983ea86d8d2b28c3132c324e93d8/lib/source-node.js
+-import { SourceMapConsumer, SourceMapGenerator } from 'source-map';
++import { SourceMapConsumer, SourceMapGenerator } from 'source-map/source-map.js';
+ import { EOL } from 'os';
+ 
+ function SourceNode(line, column, source, chunk, name) {
+diff --git a/node_modules/handlebars/lib/source-map.mjs b/node_modules/handlebars/lib/source-map.mjs
+index 54d0012..81643c1 100644
+--- a/node_modules/handlebars/lib/source-map.mjs
++++ b/node_modules/handlebars/lib/source-map.mjs
+@@ -1,5 +1,5 @@
+ // Originally from: https://github.com/mozilla/source-map/blob/f65e1c2a8507983ea86d8d2b28c3132c324e93d8/lib/source-node.js
+-import { SourceMapConsumer, SourceMapGenerator } from 'source-map';
++import { SourceMapConsumer, SourceMapGenerator } from 'source-map/source-map.js';
+ import { EOL } from 'os';
+ 
+ function SourceNode(line, column, source, chunk, name) {
