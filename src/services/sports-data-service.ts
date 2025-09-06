@@ -29,12 +29,15 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
         h2hWeight: 0.3,
         homeAdvWeight: 0.2,
         goalsWeight: 0.1,
+        injuriesWeight: 0.0,
         matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} on ${match.matchDateUtc} in the ${match.leagueCode}`,
         teamAForm: 'Not available',
         teamBForm: 'Not available',
         headToHeadStats: 'Not available',
         teamAGoals: 'Not available',
         teamBGoals: 'Not available',
+        teamAInjuries: 'Not available',
+        teamBInjuries: 'Not available',
       };
 
       const predictionResult = await generateMatchPredictions(predictionInput);
@@ -47,6 +50,7 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
             h2hWeight: predictionInput.h2hWeight,
             homeAdvWeight: predictionInput.homeAdvWeight,
             goalsWeight: predictionInput.goalsWeight,
+            injuriesWeight: predictionInput.injuriesWeight,
         },
         outcomes: predictionResult,
         confidence: predictionResult.confidence,
@@ -63,7 +67,6 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
       
     } catch (error) {
       console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
-      // Still push the match without a prediction if the AI call fails
       matchesWithPredictions.push(match);
     }
   }
