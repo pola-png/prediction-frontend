@@ -26,13 +26,6 @@ interface OpenligaDBMatch {
     leagueName: string; leagueSeason: string; matchIsFinished: boolean; matchResults: { resultID: number; pointsTeam1: number; pointsTeam2: number }[];
 }
 
-interface OpenLigaDBLeague {
-    leagueId: number;
-    leagueName: string;
-    leagueShortcut: string;
-    leagueSeason: string;
-}
-
 const teamCache = new Map<string, any>();
 
 async function getTeam(teamName: string, logoUrl: string): Promise<any> {
