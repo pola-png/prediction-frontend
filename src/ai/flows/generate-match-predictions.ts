@@ -103,6 +103,6 @@ const generateMatchPredictionsFlow = ai.defineFlow(
     if (!output) {
       throw new Error('AI failed to generate match predictions. The prompt returned null.');
     }
-    return output;
+    return output!;
   }
 );

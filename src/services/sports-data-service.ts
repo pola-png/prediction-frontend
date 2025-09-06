@@ -19,28 +19,40 @@ function sanitizeObject<T>(obj: any): T {
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   for (const match of matches) {
+    let stats: MatchStats;
     try {
-        console.log(`Generating prediction for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
-        const stats: MatchStats = await getMatchStats(match);
-        console.log(`Stats for ${match.homeTeam.name} vs ${match.awayTeam.name}:`, JSON.stringify(stats, null, 2));
+      console.log(`Fetching stats for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
+      stats = await getMatchStats(match);
+       console.log(`Stats for ${match.homeTeam.name} vs ${match.awayTeam.name}:`, JSON.stringify(stats, null, 2));
+    } catch (error) {
+      console.error(`Failed to get match stats for match ${match._id}:`, error);
+      continue; 
+    }
 
+    let parameters: PredictionParameters;
+    try {
+      console.log(`Fetching prediction parameters for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
+      const paramsInput: GetPredictionParametersInput = {
+        matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
+      };
+      parameters = await getPredictionParameters(paramsInput);
+    } catch (error) {
+      console.error(`Failed to get prediction parameters for match ${match._id}:`, error);
+      continue;
+    }
 
-        const paramsInput: GetPredictionParametersInput = {
-            matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
-        };
-        const parameters: PredictionParameters = await getPredictionParameters(paramsInput);
+    try {
+      console.log(`Generating prediction for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
+      const predictionInput: GenerateMatchPredictionsInput = {
+        ...parameters,
+        matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
+        teamAForm: stats.teamA.form,
+        teamBForm: stats.teamB.form,
+        headToHeadStats: stats.h2h,
+        teamAGoals: stats.teamA.goals,
+        teamBGoals: stats.teamB.goals,
+      };
 
-
-        const predictionInput: GenerateMatchPredictionsInput = {
-            ...parameters,
-            matchDetails: paramsInput.matchDetails,
-            teamAForm: stats.teamA.form,
-            teamBForm: stats.teamB.form,
-            headToHeadStats: stats.h2h,
-            teamAGoals: stats.teamA.goals,
-            teamBGoals: stats.teamB.goals,
-        };
-      
       const predictionResult = await generateMatchPredictions(predictionInput);
 
       const prediction = new PredictionModel({
@@ -58,12 +70,12 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
       });
 
       await prediction.save();
-      
       await MatchModel.findByIdAndUpdate(match._id, { prediction: prediction._id });
+      console.log(`Successfully generated and saved prediction for match ${match._id}`);
 
     } catch (error) {
-       if (error instanceof ZodError) {
-        console.error(`Validation error for match ${match._id}:`, JSON.stringify(error.errors, null, 2));
+      if (error instanceof ZodError) {
+        console.error(`Validation error for match prediction ${match._id}:`, JSON.stringify(error.errors, null, 2));
       } else {
         console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
       }
@@ -91,7 +103,6 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
         console.log(`Found ${matchesToPredict.length} matches without predictions. Generating now...`);
         await getAndGeneratePredictions(matchesToPredict);
         
-        // Re-fetch all matches to get the newly created predictions
         const finalMatches: Match[] = await MatchModel.find({
             _id: { $in: initialMatches.map(m => m._id) }
         })
@@ -104,7 +115,6 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
         return sanitizeObject(finalMatches);
     }
 
-    // Populate predictions for matches that already have them
     const matchesWithPredictions = await MatchModel.find({
         _id: { $in: initialMatches.map(m => m._id) }
     })

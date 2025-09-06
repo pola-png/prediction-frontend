@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -73,6 +74,6 @@ const calculateMatchStatsFlow = ai.defineFlow(
     if (!output) {
       throw new Error('AI failed to generate match stats. The prompt returned null.');
     }
-    return output;
+    return output!;
   }
 );
