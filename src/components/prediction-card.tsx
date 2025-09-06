@@ -10,7 +10,6 @@ import { getPredictionSummary } from "./match-card";
 import { format } from "date-fns";
 import { PredictionDetailsDialog } from "./prediction-details-dialog";
 import { Button } from "./ui/button";
-import { Skeleton } from './ui/skeleton';
 
 function getIndividualOutcomeOdds(match: Match): number {
     if (!match.prediction) return 1;
@@ -21,60 +20,19 @@ function getIndividualOutcomeOdds(match: Match): number {
 }
 
 
-export function PredictionCard({ matches }: { matches: Match[] }) {
-    
-    const [totalOdds, setTotalOdds] = React.useState<string | null>(null);
-    const [isLoading, setIsLoading] = React.useState(true);
-    const [error, setError] = React.useState<string | null>(null);
-
-    React.useEffect(() => {
-        const fetchTotalOdds = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const matchIds = matches.map(m => m._id);
-                const res = await fetch('/api/odds/calculate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ matchIds })
-                });
-
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.message || 'Failed to fetch odds');
-                }
-
-                const data = await res.json();
-                setTotalOdds(data.totalOdds);
-
-            } catch (e: any) {
-                setError(e.message);
-                console.error(e);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (matches.length > 0) {
-            fetchTotalOdds();
-        } else {
-            setIsLoading(false);
-        }
-    }, [matches]);
-
-
+export function PredictionCard({ matches, totalOdds }: { matches: Match[], totalOdds: string | null }) {
     return (
         <Card className="border-2 border-primary/40 shadow-lg">
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Accumulator Playcard</CardTitle>
                     <div className="text-right">
-                        {isLoading && <Skeleton className="h-7 w-40" />}
-                        {error && <Badge variant="destructive">Error</Badge>}
-                        {!isLoading && !error && totalOdds && (
+                        {totalOdds ? (
                              <Badge variant="default" className="text-lg px-4 py-1">
                                 Total Odds: {totalOdds}
                             </Badge>
+                        ) : (
+                             <Badge variant="destructive">Odds Error</Badge>
                         )}
                     </div>
                 </div>

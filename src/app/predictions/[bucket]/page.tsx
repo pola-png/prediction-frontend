@@ -3,7 +3,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import type { Match } from '@/lib/types';
 import { PredictionCard } from '@/components/prediction-card';
-import { getMatchesForBucket } from '@/services/predictions-service';
+import { getMatchesForBucket, calculateAccumulatorOdds } from '@/services/predictions-service';
 
 
 const bucketDetails: Record<string, { title: string, description: string }> = {
@@ -22,6 +22,8 @@ export default async function BucketPage({ params }: { params: { bucket: string 
   
   const accumulators = filteredMatches.length > 0 ? [filteredMatches] : [];
 
+  const oddsPromises = accumulators.map(acc => calculateAccumulatorOdds(acc.map(m => m._id)));
+  const oddsResults = await Promise.all(oddsPromises);
 
   return (
     <SidebarProvider>
@@ -44,7 +46,11 @@ export default async function BucketPage({ params }: { params: { bucket: string 
               <CardContent className="space-y-6">
                 {accumulators.length > 0 ? (
                     accumulators.map((accumulator, index) => (
-                        <PredictionCard key={index} matches={accumulator} />
+                        <PredictionCard 
+                            key={index} 
+                            matches={accumulator} 
+                            totalOdds={oddsResults[index]}
+                        />
                     ))
                 ) : (
                     <div className="text-center text-muted-foreground py-8">
