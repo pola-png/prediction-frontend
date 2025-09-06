@@ -1,4 +1,12 @@
+
 import mongoose from 'mongoose';
+
+// Import all models to ensure they are registered with Mongoose
+import '@/models/Team';
+import '@/models/Match';
+import '@/models/Prediction';
+import '@/models/History';
+
 
 const MONGODB_URI = process.env.MONGO_URI;
 

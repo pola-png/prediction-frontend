@@ -170,26 +170,26 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
         ]);
 
         const combined = [...sportsDbMatches, ...openligaDbMatches];
-        if (combined.length === 0) {
-            throw new Error("Both live APIs returned no matches.");
+        
+        if (combined.length > 0) {
+          const uniqueMatches = Array.from(new Map(combined.map(m => [`${m.homeTeam.name}-${m.awayTeam.name}-${m.matchDateUtc.slice(0,10)}`, m])).values());
+          uniqueMatches.sort((a,b) => new Date(a.matchDateUtc).getTime() - new Date(b.matchDateUtc).getTime());
+          return uniqueMatches.slice(0, limit);
         }
-        
-        const uniqueMatches = Array.from(new Map(combined.map(m => [`${m.homeTeam.name}-${m.awayTeam.name}-${m.matchDateUtc.slice(0,10)}`, m])).values());
-        
-        uniqueMatches.sort((a,b) => new Date(a.matchDateUtc).getTime() - new Date(b.matchDateUtc).getTime());
-
-        return uniqueMatches.slice(0, limit);
 
     } catch (error) {
-        console.error('Failed to fetch from primary sources, attempting to use fallback data from DB:', error);
-        const dbMatches = await MatchModel.find({ status: 'scheduled', matchDateUtc: { $gte: new Date() }})
-            .sort({ matchDateUtc: 1 })
-            .limit(limit)
-            .populate('homeTeam')
-            .populate('awayTeam')
-            .populate('prediction')
-            .lean();
-
-        return dbMatches.map(m => ({...m, _id: m._id.toString(), homeTeam: {...(m.homeTeam as any), _id: (m.homeTeam as any)._id.toString()}, awayTeam: {...(m.awayTeam as any), _id: (m.awayTeam as any)._id.toString()}, prediction: m.prediction ? {...(m.prediction as any), _id: (m.prediction as any)._id.toString() } : undefined })) as unknown as Match[];
+        console.error('Failed to fetch from primary sources, will attempt to use fallback data from DB:', error);
     }
+    
+    // Fallback to DB if live APIs fail or return no matches
+    console.log('Fetching from DB as a fallback.');
+    const dbMatches = await MatchModel.find({ status: 'scheduled', matchDateUtc: { $gte: new Date() }})
+        .sort({ matchDateUtc: 1 })
+        .limit(limit)
+        .populate('homeTeam')
+        .populate('awayTeam')
+        .populate('prediction')
+        .lean();
+
+    return dbMatches.map(m => ({...m, _id: m._id.toString(), homeTeam: {...(m.homeTeam as any), _id: (m.homeTeam as any)._id.toString()}, awayTeam: {...(m.awayTeam as any), _id: (m.awayTeam as any)._id.toString()}, prediction: m.prediction ? {...(m.prediction as any), _id: (m.prediction as any)._id.toString() } : undefined })) as unknown as Match[];
 }
