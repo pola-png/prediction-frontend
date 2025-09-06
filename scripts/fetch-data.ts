@@ -89,7 +89,6 @@ async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, tran
 
 async function main() {
     await dbConnect();
-    const currentYear = new Date().getFullYear();
     const today = new Date().toISOString().split('T')[0];
 
     // --- Fetch from TheSportsDB ---
@@ -133,20 +132,18 @@ async function main() {
     await fetchFromSource(
         'OpenLigaDB',
         async () => {
-            let allMatches: OpenligaDBMatch[] = [];
-            for (const league of OPENLIGA_DB_LEAGUES) {
-                 try {
-                    const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}`);
-                     if (response.ok) {
-                        const data: OpenligaDBMatch[] = await response.json();
-                        allMatches.push(...data.filter(m => !m.matchIsFinished));
-                    } else {
-                        console.warn(`OpenLigaDB API request failed for league ${league} on date ${today} with status: ${response.status}`);
-                    }
-                 } catch (error) {
-                    console.warn(`Could not fetch from OpenLigaDB for league ${league} on date ${today}`, error);
-                 }
-            }
+             let allMatches: OpenligaDBMatch[] = [];
+             try {
+                const response = await fetch(`${OPENLIGADB_BASE_URL}/getmatchesbydate/${today}`);
+                 if (response.ok) {
+                    const data: OpenligaDBMatch[] = await response.json();
+                    allMatches.push(...data.filter(m => !m.matchIsFinished));
+                } else {
+                    console.warn(`OpenLigaDB API request failed for date ${today} with status: ${response.status}`);
+                }
+             } catch (error) {
+                console.warn(`Could not fetch from OpenLigaDB for date ${today}`, error);
+             }
             return allMatches;
         },
         async (match: OpenligaDBMatch) => {
