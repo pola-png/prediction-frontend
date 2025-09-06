@@ -11,15 +11,14 @@ import {ai} from '@/ai/genkit';
 import { GenerateMatchPredictionsInputSchema, GenerateMatchPredictionsOutputSchema, type GenerateMatchPredictionsInput, type GenerateMatchPredictionsOutput } from '@/lib/types';
 
 
-export async function generateMatchPredictions(input: GenerateMatchPredictionsInput): Promise<GenerateMatchPredictionsOutput> {
-  const generateMatchPredictionsFlow = ai.defineFlow(
-    {
-      name: 'generateMatchPredictionsFlow',
-      inputSchema: GenerateMatchPredictionsInputSchema,
-      outputSchema: GenerateMatchPredictionsOutputSchema,
-    },
-    async (input) => {
-      const prompt = `
+const generateMatchPredictionsFlow = ai.defineFlow(
+  {
+    name: 'generateMatchPredictionsFlow',
+    inputSchema: GenerateMatchPredictionsInputSchema,
+    outputSchema: GenerateMatchPredictionsOutputSchema,
+  },
+  async (input) => {
+    const prompt = `
 You are an expert sports analyst specializing in football (soccer) match predictions. Your response MUST be a valid JSON object that conforms to the specified schema.
 
 Based on the provided information, generate the most likely outcomes for the match.
@@ -69,20 +68,22 @@ Example of a valid JSON output:
 }
 `;
 
-      const llmResponse = await ai.generate({
-        model: 'gemini-1.5-flash-preview',
-        prompt: prompt,
-        output: {
-          schema: GenerateMatchPredictionsOutputSchema,
-        }
-      });
-      
-      const output = llmResponse.output();
-      if (!output) {
-        throw new Error('AI failed to generate match predictions. The prompt returned null.');
+    const llmResponse = await ai.generate({
+      model: 'gemini-1.5-flash-preview',
+      prompt: prompt,
+      output: {
+        schema: GenerateMatchPredictionsOutputSchema,
       }
-      return output;
+    });
+    
+    const output = llmResponse.output();
+    if (!output) {
+      throw new Error('AI failed to generate match predictions. The prompt returned null.');
     }
-  );
+    return output;
+  }
+);
+
+export async function generateMatchPredictions(input: GenerateMatchPredictionsInput): Promise<GenerateMatchPredictionsOutput> {
   return generateMatchPredictionsFlow(input);
 }

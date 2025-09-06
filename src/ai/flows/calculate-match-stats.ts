@@ -10,16 +10,14 @@
 import {ai} from '@/ai/genkit';
 import { CalculateMatchStatsInputSchema, CalculateMatchStatsOutputSchema, type CalculateMatchStatsInput, type CalculateMatchStatsOutput } from '@/lib/types';
 
-
-export async function calculateMatchStats(input: CalculateMatchStatsInput): Promise<CalculateMatchStatsOutput> {
-  const calculateMatchStatsFlow = ai.defineFlow(
-    {
-      name: 'calculateMatchStatsFlow',
-      inputSchema: CalculateMatchStatsInputSchema,
-      outputSchema: CalculateMatchStatsOutputSchema,
-    },
-    async (input) => {
-      const prompt = `
+const calculateMatchStatsFlow = ai.defineFlow(
+  {
+    name: 'calculateMatchStatsFlow',
+    inputSchema: CalculateMatchStatsInputSchema,
+    outputSchema: CalculateMatchStatsOutputSchema,
+  },
+  async (input) => {
+    const prompt = `
 You are a sports data analyst. Your task is to calculate key statistics for an upcoming match between ${input.teamAName} and ${input.teamBName} based on a list of their recent historical matches.
 
 Analyze the provided match data to determine the following. Your response MUST be a valid JSON object that conforms to the specified schema.
@@ -43,21 +41,22 @@ Example of a valid JSON output:
 }
 `;
 
-      const llmResponse = await ai.generate({
-        model: 'gemini-1.5-flash-preview',
-        prompt: prompt,
-        output: {
-          schema: CalculateMatchStatsOutputSchema,
-        }
-      });
-      
-      const output = llmResponse.output();
-      if (!output) {
-        throw new Error('AI failed to generate match stats. The prompt returned null.');
+    const llmResponse = await ai.generate({
+      model: 'gemini-1.5-flash-preview',
+      prompt: prompt,
+      output: {
+        schema: CalculateMatchStatsOutputSchema,
       }
-      return output;
+    });
+    
+    const output = llmResponse.output();
+    if (!output) {
+      throw new Error('AI failed to generate match stats. The prompt returned null.');
     }
-  );
+    return output;
+  }
+);
+
+export async function calculateMatchStats(input: CalculateMatchStatsInput): Promise<CalculateMatchStatsOutput> {
   return calculateMatchStatsFlow(input);
 }
-
