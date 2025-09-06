@@ -58,7 +58,7 @@ export async function generateMatchPredictions(input: GenerateMatchPredictionsIn
 
 const prompt = ai.definePrompt({
   name: 'generateMatchPredictionsPrompt',
-  input: {schema: GenerateMatchLlmInputSchema},
+  input: {schema: GenerateMatchPredictionsInputSchema},
   output: {schema: GenerateMatchPredictionsOutputSchema},
   prompt: `You are an expert sports analyst specializing in football (soccer) match predictions. Based on the provided information, generate the most likely outcomes for the match.
 
