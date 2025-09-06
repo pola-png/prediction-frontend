@@ -12,36 +12,44 @@ import { getPredictionParameters, type GetPredictionParametersInput, type Predic
 import { ZodError } from 'zod';
 import { sanitizeObject } from '@/lib/utils';
 
-const PREDICTION_VERSION = 'v1.1';
+const PREDICTION_VERSION = 'v1.2';
 
 export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   console.log(`Starting prediction generation process for ${matches.length} matches. Version: ${PREDICTION_VERSION}`);
+  
   for (const match of matches) {
+    if(!match.homeTeam || !match.awayTeam) {
+        console.warn(`Skipping match ${match._id} due to missing team data.`);
+        continue;
+    }
+
+    console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] - ID: ${match._id}`);
+
     let stats: MatchStats;
     try {
-      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Fetching stats...`);
+      console.log(` -> Fetching stats...`);
       stats = await getMatchStats(match);
-      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Stats fetched successfully.`);
+      console.log(` -> Stats fetched successfully.`);
     } catch (error) {
-      console.error(`Failed to get match stats for match ${match._id}:`, error);
+      console.error(`[ERROR] Failed to get match stats for match ${match._id}:`, error);
       continue; 
     }
 
     let parameters: PredictionParameters;
     try {
-      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Fetching prediction parameters...`);
+      console.log(` -> Fetching prediction parameters...`);
       const paramsInput: GetPredictionParametersInput = {
         matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
       };
       parameters = await getPredictionParameters(paramsInput);
-       console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Parameters fetched:`, parameters);
+       console.log(` -> Parameters fetched:`, parameters);
     } catch (error) {
-      console.error(`Failed to get prediction parameters for match ${match._id}:`, error);
+      console.error(`[ERROR] Failed to get prediction parameters for match ${match._id}:`, error);
       continue;
     }
 
     try {
-      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Generating prediction...`);
+      console.log(` -> Generating prediction...`);
       const predictionInput: GenerateMatchPredictionsInput = {
         ...parameters,
         matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
@@ -70,13 +78,13 @@ export async function getAndGeneratePredictions(matches: Match[]): Promise<void>
 
       await prediction.save();
       await MatchModel.findByIdAndUpdate(match._id, { prediction: prediction._id });
-      console.log(`[${match.homeTeam.name} vs ${match.awayTeam.name}] Successfully generated and saved prediction for match ${match._id}`);
+      console.log(` -> [SUCCESS] Generated and saved prediction for match ${match._id}`);
 
     } catch (error) {
       if (error instanceof ZodError) {
-        console.error(`Validation error for match prediction ${match._id}:`, JSON.stringify(error.errors, null, 2));
+        console.error(`[ERROR] Zod validation error for match prediction ${match._id}:`, JSON.stringify(error.errors, null, 2));
       } else {
-        console.error(`Failed to generate or save prediction for match ${match._id}:`, error);
+        console.error(`[ERROR] Failed to generate or save prediction for match ${match._id}:`, error);
       }
     }
   }
@@ -99,7 +107,7 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     const matchesToPredict = initialMatches.filter(m => !m.prediction);
     
     if (matchesToPredict.length > 0) {
-        console.log(`Found ${matchesToPredict.length} matches without predictions. Generating now...`);
+        console.log(`Found ${matchesToPredict.length} upcoming matches without predictions. Generating now...`);
         await getAndGeneratePredictions(matchesToPredict);
         
         const finalMatches: Match[] = await MatchModel.find({
