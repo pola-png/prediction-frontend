@@ -42,7 +42,7 @@ Home Advantage Weight: ${input.homeAdvWeight}
 Goals Weight: ${input.goalsWeight}
 ${input.injuriesWeight ? `Injuries Weight: ${input.injuriesWeight}` : ''}
 
-Provide the following outcomes with probabilities as values between 0 and 1. The sum of probabilities for 'home', 'draw', and 'away' in the 'oneXTwo' market must equal 1.0.
+Provide the following outcomes with probabilities as values between 0 and 1. The sum of probabilities for 'home', 'draw', and 'away' in the 'oneXTwo' market must equal 1.0. Do not focus only on the main winner market; use the statistics to predict goal-related outcomes as well.
 
 - 1X2: home win, draw, away win.
 - Double Chance: home/draw, home/away, draw/away.

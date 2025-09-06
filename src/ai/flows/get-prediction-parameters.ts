@@ -27,15 +27,15 @@ export async function getPredictionParameters(input: GetPredictionParametersInpu
 Analyze the match details provided and decide the importance of each factor.
 
 For example:
-- In a derby or rivalry, Head-to-Head (H2H) stats might be more important.
-- In a cup final, team form might be less relevant than big-match experience.
-- If one team is much stronger, their recent goal-scoring form is highly significant.
+- In a derby or rivalry match, Head-to-Head (H2H) stats might be more important, so h2hWeight should be higher.
+- In a cup final or a match between two very defensive teams, team form might be less relevant than big-match experience or defensive solidity, so teamFormWeight might be lower.
+- If one team is on a hot streak of scoring, their recent goal-scoring form is highly significant, so goalsWeight should be higher.
 
 The weights (teamFormWeight, h2hWeight, homeAdvWeight, goalsWeight) MUST sum to 1.0.
 
 Match Details: ${input.matchDetails}
 
-Now, call the predictionParametersTool with the calculated weights. Your response MUST be a valid JSON object that conforms to the tool's schema.
+Now, call the predictionParametersTool with the calculated weights. Your response MUST be a valid call to this tool.
 `;
 
       const llmResponse = await ai.generate({

@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "fetch-data": "tsx scripts/fetch-data.ts"
+    "fetch-data": "tsx scripts/fetch-data.ts",
+    "predict": "tsx scripts/predict-all-matches.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
