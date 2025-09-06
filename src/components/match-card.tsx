@@ -16,7 +16,7 @@ function getPredictionSummary(match: Match) {
     const { home, away, draw } = match.prediction.outcomes.oneXTwo;
 
     if (home > away && home > draw) return `${match.homeTeam.name} to Win`;
-    if (away > home && away > draw) return `${matchawayTeam.name} to Win`;
+    if (away > home && away > draw) return `${match.awayTeam.name} to Win`;
     if (draw > home && draw > away) return 'Draw';
 
     const { over25, bttsYes } = match.prediction.outcomes;
