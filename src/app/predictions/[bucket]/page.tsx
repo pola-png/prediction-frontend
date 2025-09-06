@@ -3,6 +3,8 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import type { Match } from '@/lib/types';
 import { PredictionCard } from '@/components/prediction-card';
+import { getMatchesForBucket } from '@/services/predictions-service';
+
 
 const bucketDetails: Record<string, { title: string, description: string }> = {
     'vip': { title: 'VIP Predictions', description: 'High confidence, conservative picks with odds under 2.0.' },
@@ -11,24 +13,13 @@ const bucketDetails: Record<string, { title: string, description: string }> = {
     'big10': { title: 'Big 10+ Odds', description: 'Higher-risk aggregate selections with total odds over 10.0.' },
 }
 
-async function getMatchesByBucket(bucket: string): Promise<Match[]> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/predictions?bucket=${bucket}`, { cache: 'no-store' });
-    if (!res.ok) {
-        console.error(`Failed to fetch matches for bucket ${bucket}`);
-        return [];
-    }
-    return res.json();
-}
-
 
 export default async function BucketPage({ params }: { params: { bucket: string } }) {
   const { bucket } = params;
   const details = bucketDetails[bucket] || { title: 'Predictions', description: 'Browse predictions by category.' };
   
-  const filteredMatches = await getMatchesByBucket(bucket);
+  const filteredMatches = await getMatchesForBucket(bucket);
   
-  // For now, we'll treat all matches in a bucket as a single accumulator.
-  // In the future, this could be split into multiple cards.
   const accumulators = filteredMatches.length > 0 ? [filteredMatches] : [];
 
 
