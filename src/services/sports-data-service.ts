@@ -17,7 +17,7 @@ function sanitizeObject<T>(obj: any): T {
 }
 
 
-async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
+export async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
   for (const match of matches) {
     try {
         console.log(`Generating prediction for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
@@ -129,4 +129,3 @@ export async function getAllMatches(): Promise<Match[]> {
 
     return sanitizeObject(allMatches);
 }
-
