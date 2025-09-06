@@ -6,7 +6,7 @@ import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 
 // --- TheSportsDB Integration ---
-const THESPORTSDB_API_KEY = process.env.THESPORTSDB_API_KEY || '3'; // Use '3' as it's a common example key
+const THESPORTSDB_API_KEY = process.env.THESPORTSDB_API_KEY || '3'; // Use '3' as a more capable free key
 const THESPORTSDB_BASE_URL = `https://www.thesportsdb.com/api/v1/json/${THESPORTSDB_API_KEY}`;
 
 interface TheSportsDBEvent {
