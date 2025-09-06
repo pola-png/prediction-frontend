@@ -7,9 +7,12 @@ import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 import PredictionModel from '@/models/Prediction';
 import { generateMatchPredictions, type GenerateMatchPredictionsInput } from '@/ai/flows/generate-match-predictions';
+import { ZodError } from 'zod';
+
 
 function sanitizeObject<T>(obj: any): T {
-    return JSON.parse(JSON.stringify(obj));
+    const str = JSON.stringify(obj);
+    return JSON.parse(str) as T;
 }
 
 async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
@@ -29,15 +32,12 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
         h2hWeight: 0.3,
         homeAdvWeight: 0.2,
         goalsWeight: 0.1,
-        injuriesWeight: 0.0,
         matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} on ${match.matchDateUtc} in the ${match.leagueCode}`,
         teamAForm: 'Not available',
         teamBForm: 'Not available',
         headToHeadStats: 'Not available',
         teamAGoals: 'Not available',
         teamBGoals: 'Not available',
-        teamAInjuries: 'Not available',
-        teamBInjuries: 'Not available',
       };
 
       const predictionResult = await generateMatchPredictions(predictionInput);
@@ -50,7 +50,6 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<Match[]> {
             h2hWeight: predictionInput.h2hWeight,
             homeAdvWeight: predictionInput.homeAdvWeight,
             goalsWeight: predictionInput.goalsWeight,
-            injuriesWeight: predictionInput.injuriesWeight,
         },
         outcomes: predictionResult,
         confidence: predictionResult.confidence,
