@@ -107,6 +107,11 @@ async function main() {
                          console.warn(`Soccerdataapi.com API returned an error: ${data.detail}`);
                          return [];
                     }
+                    // The API can return an object on error or an empty array.
+                    if (!Array.isArray(data)) {
+                        console.warn(`Soccerdataapi.com did not return an array. Response:`, JSON.stringify(data, null, 2));
+                        return [];
+                    }
                     // Flatten the matches from all leagues into one array
                     return data.flatMap((league: SoccerDataLeague) => league.matches || []);
                 } else {
