@@ -47,15 +47,17 @@ const ResultIcon = ({ match }: { match: Match }) => {
 
 
 export function MatchCard({ match }: { match: Match }) {
+  const [formattedDate, setFormattedDate] = React.useState('');
   const [formattedTime, setFormattedTime] = React.useState('');
-  const matchDate = new Date(match.matchDateUtc);
+  
   const summary = getPredictionSummary(match);
-
   const isFinished = match.status === 'finished';
 
   React.useEffect(() => {
+    const matchDate = new Date(match.matchDateUtc);
+    setFormattedDate(format(matchDate, 'EEE, MMM d'));
     setFormattedTime(format(matchDate, 'HH:mm'));
-  }, [matchDate]);
+  }, [match.matchDateUtc]);
 
   return (
     <div className="border rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4 hover:bg-card/60 transition-colors">
@@ -92,11 +94,11 @@ export function MatchCard({ match }: { match: Match }) {
       <div className="flex flex-col items-center sm:items-start gap-1 text-sm text-muted-foreground w-full sm:w-auto sm:min-w-48">
         <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            <span>{format(matchDate, 'EEE, MMM d')}</span>
+            <span>{formattedDate || '...'}</span>
         </div>
         <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            <span>{formattedTime}</span>
+            <span>{formattedTime || '...'}</span>
         </div>
          <Badge variant="secondary">{match.leagueCode}</Badge>
       </div>
