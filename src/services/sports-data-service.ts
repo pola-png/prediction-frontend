@@ -8,6 +8,7 @@ import TeamModel from '@/models/Team';
 import PredictionModel from '@/models/Prediction';
 import { generateMatchPredictions, type GenerateMatchPredictionsInput } from '@/ai/flows/generate-match-predictions';
 import { getMatchStats, type MatchStats } from '@/services/match-stats-service';
+import { getPredictionParameters, type GetPredictionParametersInput, type PredictionParameters } from '@/ai/flows/get-prediction-parameters';
 import { ZodError } from 'zod';
 
 function sanitizeObject<T>(obj: any): T {
@@ -22,12 +23,15 @@ async function getAndGeneratePredictions(matches: Match[]): Promise<void> {
         console.log(`Generating prediction for match: ${match.homeTeam.name} vs ${match.awayTeam.name}`);
         const stats: MatchStats = await getMatchStats(match);
 
-        const predictionInput: GenerateMatchPredictionsInput = {
-            teamFormWeight: 0.4,
-            h2hWeight: 0.3,
-            homeAdvWeight: 0.2,
-            goalsWeight: 0.1,
+        const paramsInput: GetPredictionParametersInput = {
             matchDetails: `${match.homeTeam.name} vs ${match.awayTeam.name} in the ${match.leagueCode}`,
+        };
+        const parameters: PredictionParameters = await getPredictionParameters(paramsInput);
+
+
+        const predictionInput: GenerateMatchPredictionsInput = {
+            ...parameters,
+            matchDetails: paramsInput.matchDetails,
             teamAForm: stats.teamA.form,
             teamBForm: stats.teamB.form,
             headToHeadStats: stats.h2h,
@@ -98,7 +102,18 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
         return sanitizeObject(finalMatches);
     }
 
-    return sanitizeObject(initialMatches);
+    // Populate predictions for matches that already have them
+    const matchesWithPredictions = await MatchModel.find({
+        _id: { $in: initialMatches.map(m => m._id) }
+    })
+    .populate({ path: 'homeTeam', model: TeamModel })
+    .populate({ path: 'awayTeam', model: TeamModel })
+    .populate({ path: 'prediction', model: PredictionModel })
+    .sort({ matchDateUtc: 1 })
+    .lean({ virtuals: true });
+
+
+    return sanitizeObject(matchesWithPredictions);
 }
 
 export async function getAllMatches(): Promise<Match[]> {
