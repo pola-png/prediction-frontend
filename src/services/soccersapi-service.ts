@@ -2,6 +2,7 @@
 'use server';
 
 import type { Match, Team } from "@/lib/types";
+import fetch from 'node-fetch';
 
 const SOCCERSAPI_USER = process.env.SOCCERSAPI_USER;
 const SOCCERSAPI_TOKEN = process.env.SOCCERSAPI_TOKEN;
@@ -56,14 +57,20 @@ export async function fetchFromSoccersApi(): Promise<Partial<Match>[]> {
     
     try {
         const response = await fetch(`${BASE_URL}/fixtures/?user=${SOCCERSAPI_USER}&token=${SOCCERSAPI_TOKEN}&t=upcoming`);
-        const data = await response.json();
+        const result: any = await response.json();
         
-        if (!data.data || data.data.length === 0) {
+        if (result.error) {
+            console.error('Error from SoccersAPI:', result.error.message, `(Code: ${result.error.code})`);
+            return [];
+        }
+        
+        const matches = result.data;
+        if (!matches || matches.length === 0) {
             console.log('No upcoming matches found from SoccersAPI.');
             return [];
         }
 
-        return data.data.map((match: SoccersApiMatch) => {
+        return matches.map((match: SoccersApiMatch) => {
             let homeGoals: number | undefined;
             let awayGoals: number | undefined;
 
@@ -72,11 +79,11 @@ export async function fetchFromSoccersApi(): Promise<Partial<Match>[]> {
             }
 
             const mappedMatch: Partial<Match> = {
-                source: 'soccerdataapi', // Keep as soccerdataapi for consistency, or change if needed
+                source: 'soccerdataapi', // Keep as soccerdataapi for consistency in the DB
                 externalId: String(match.id),
                 leagueCode: String(match.league_id),
                 season: String(match.season_id),
-                matchDateUtc: new Date(match.date_time).toISOString(),
+                matchDateUtc: new Date(match.date_time.replace(' ', 'T') + 'Z').toISOString(), // handle UTC time
                 status: mapStatus(match.status),
                 homeTeam: { name: match.home.name } as Team,
                 awayTeam: { name: match.away.name } as Team,

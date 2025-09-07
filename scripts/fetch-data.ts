@@ -5,7 +5,7 @@ import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 import fetch from 'node-fetch';
-import { fetchFromSoccerDataApi } from '@/services/soccerdata-service';
+import { fetchFromSoccersApi } from '@/services/soccersapi-service';
 
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/openfootball/football.json/master';
 
@@ -121,8 +121,8 @@ async function main() {
     
     // Fetch live data first
     await fetchFromSource(
-        'soccerdataapi',
-        fetchFromSoccerDataApi,
+        'soccersapi',
+        fetchFromSoccersApi,
         async (match) => {
             await updateOrCreateMatch(match);
         }
