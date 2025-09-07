@@ -20,3 +20,13 @@ backend:
     build:
       commands:
         - amplifyPush --simple
+env:
+  variables:
+    NODE_ENV: production
+    API_SECRET: ${API_SECRET}
+    CRON_TOKEN: ${CRON_TOKEN}
+    SOCCERSAPI_USER: ${SOCCERSAPI_USER}
+    SOCCERSAPI_TOKEN: ${SOCCERSAPI_TOKEN}
+    MONGO_URI: ${MONGO_URI}
+    FOOTBALL_JSON_URL: ${FOOTBALL_JSON_URL}
+    GEMINI_API_KEY: ${GEMINI_API_KEY}
