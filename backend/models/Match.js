@@ -1,8 +1,8 @@
 
-import mongoose, { Schema, Document, models, Model } from 'mongoose';
-import type { Match as MatchType } from '@/lib/types';
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const MatchSchema = new Schema<MatchType>({
+const MatchSchema = new Schema({
     source: String,
     externalId: { type: String, unique: true, sparse: true },
     leagueCode: { type: String, required: true },
@@ -16,5 +16,4 @@ const MatchSchema = new Schema<MatchType>({
     prediction: { type: Schema.Types.ObjectId, ref: 'Prediction' },
 }, { timestamps: true });
 
-const Match = (models.Match as Model<MatchType>) || mongoose.model<MatchType>('Match', MatchSchema);
-export default Match;
+module.exports = mongoose.model('Match', MatchSchema);

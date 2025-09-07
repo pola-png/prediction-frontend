@@ -1,14 +1,14 @@
 
+'use client';
+
 import * as React from 'react';
-import { Suspense } from 'react';
+import axios from 'axios';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import type { Match } from '@/lib/types';
 import { PredictionCard } from '@/components/prediction-card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getMatchesForBucket } from '@/services/predictions-service';
-
 
 const bucketDetails: Record<string, { title: string, description: string }> = {
     'vip': { title: 'VIP Predictions', description: 'High confidence, conservative picks with odds under 2.0.' },
@@ -17,6 +17,7 @@ const bucketDetails: Record<string, { title: string, description: string }> = {
     'big10': { title: 'Big 10+ Odds', description: 'Higher-risk aggregate selections with total odds over 10.0.' },
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
 
 const ListSkeleton = () => (
   <div className='space-y-4'>
@@ -61,10 +62,29 @@ function groupMatchesIntoAccumulators(matches: Match[], targetOdds: number): Mat
   return accumulators;
 }
 
+function PredictionsList({ bucket }: { bucket: string }) {
+  const [matches, setMatches] = React.useState<Match[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-async function PredictionsList({ bucket }: { bucket: string }) {
-  const matches = await getMatchesForBucket(bucket);
+  React.useEffect(() => {
+    const fetchMatches = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${API_BASE_URL}/predictions/${bucket}`);
+            setMatches(response.data);
+        } catch (error) {
+            console.error(`Failed to fetch matches for bucket ${bucket}`, error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchMatches();
+  }, [bucket]);
   
+  if (loading) {
+    return <ListSkeleton />;
+  }
+
   let targetOdds = 2.0;
   if(bucket === '5odds') targetOdds = 5.0;
   if(bucket === 'big10') targetOdds = 10.0;
@@ -126,9 +146,7 @@ export default function BucketPage({ params }: { params: { bucket: string } }) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <Suspense fallback={<ListSkeleton />}>
-                  <PredictionsList bucket={bucket} />
-                </Suspense>
+                <PredictionsList bucket={bucket} />
               </CardContent>
             </Card>
         </main>
@@ -136,5 +154,3 @@ export default function BucketPage({ params }: { params: { bucket: string } }) {
     </SidebarProvider>
   );
 }
-
-export const dynamic = 'force-dynamic';

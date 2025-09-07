@@ -1,8 +1,8 @@
 
-import mongoose, { Schema, Document, models, Model } from 'mongoose';
-import type { Prediction as PredictionType } from '@/lib/types';
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const PredictionSchema = new Schema<PredictionType>({
+const PredictionSchema = new Schema({
     matchId: { type: Schema.Types.ObjectId, ref: 'Match', required: true },
     version: String,
     features: {
@@ -33,5 +33,4 @@ const PredictionSchema = new Schema<PredictionType>({
     bucket: { type: String, required: true, enum: ['vip', '2odds', '5odds', 'big10'] },
 }, { timestamps: true });
 
-const Prediction = (models.Prediction as Model<PredictionType>) || mongoose.model<PredictionType>('Prediction', PredictionSchema);
-export default Prediction;
+module.exports = mongoose.model('Prediction', PredictionSchema);

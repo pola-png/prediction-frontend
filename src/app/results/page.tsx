@@ -1,17 +1,14 @@
 
+'use client';
+
 import * as React from 'react';
-import { Suspense } from 'react';
+import axios from 'axios';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { MatchCard } from '@/components/match-card';
 import type { Match } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import dbConnect from '@/lib/mongodb';
-import MatchModel from '@/models/Match';
-import Team from '@/models/Team';
-import Prediction from '@/models/Prediction';
-import { sanitizeObject } from '@/lib/utils';
 
 
 const ListSkeleton = () => (
@@ -24,26 +21,32 @@ const ListSkeleton = () => (
   </div>
 );
 
-async function getRecentMatches(): Promise<Match[]> {
-    await dbConnect();
-    // Ensure models are registered
-    Team;
-    Prediction;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
 
-    const matches = await MatchModel.find({ status: 'finished' })
-        .sort({ matchDateUtc: -1 })
-        .limit(50)
-        .populate('homeTeam')
-        .populate('awayTeam')
-        .populate('prediction')
-        .lean();
+
+function ResultsList() {
+    const [recentMatches, setRecentMatches] = React.useState<Match[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchResults = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get(`${API_BASE_URL}/results`);
+                setRecentMatches(response.data);
+            } catch (error) {
+                console.error('Failed to fetch results', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchResults();
+    }, []);
     
-    return sanitizeObject(matches);
-}
+    if (loading) {
+        return <ListSkeleton />;
+    }
 
-
-async function ResultsList() {
-    const recentMatches = await getRecentMatches();
     return (
         <>
             {recentMatches.length > 0 ? (
@@ -79,9 +82,7 @@ export default function ResultsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Suspense fallback={<ListSkeleton />}>
-                    <ResultsList />
-                </Suspense>
+                <ResultsList />
               </CardContent>
             </Card>
         </main>
@@ -90,4 +91,3 @@ export default function ResultsPage() {
   );
 }
 
-export const dynamic = 'force-dynamic';
