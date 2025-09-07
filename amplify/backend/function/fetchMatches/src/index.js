@@ -14,14 +14,11 @@ Parameters will be of the form { Name: 'secretName', Value: 'secretValue', ... }
 */
 const axios = require("axios");
 const mongoose = require("mongoose");
+const aws = require('aws-sdk');
 
 const { Schema } = mongoose;
 
-// Database connection
-let conn = null;
-const MONGO_URI = process.env.MONGO_URI;
-
-// Mongoose Schemas (must be defined in each Lambda)
+// --- Mongoose Schemas ---
 const TeamSchema = new Schema({
   _id: { type: Schema.Types.ObjectId, auto: true },
   name: { type: String, required: true, unique: true },
@@ -44,13 +41,12 @@ const MatchSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-const Team = mongoose.models.Team || mongoose.model("Team", TeamSchema);
-const Match = mongoose.models.Match || mongoose.model("Match", MatchSchema);
 
-
-async function dbConnect() {
+// --- Database Connection ---
+let conn = null;
+async function dbConnect(mongoUri) {
   if (conn == null) {
-    conn = mongoose.connect(MONGO_URI, {
+    conn = mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
       bufferCommands: false,
     }).then(() => mongoose);
@@ -59,11 +55,27 @@ async function dbConnect() {
   return conn;
 }
 
+// --- Helper Functions ---
+async function getSecrets() {
+    const ssm = new aws.SSM();
+    const { Parameters } = await ssm.getParameters({
+        Names: ["SOCCERS_API_USER", "SOCCERS_API_TOKEN", "MONGO_URI"].map(secretName => process.env[secretName]),
+        WithDecryption: true,
+    }).promise();
 
-async function getOrCreateTeam(name) {
-    let team = await Team.findOne({ name });
+    const secrets = {};
+    for (const param of Parameters) {
+        // The Name is the full path, so we extract the base name.
+        const secretName = param.Name.split('/').pop();
+        secrets[secretName] = param.Value;
+    }
+    return secrets;
+}
+
+async function getOrCreateTeam(TeamModel, name) {
+    let team = await TeamModel.findOne({ name });
     if (!team) {
-        team = await Team.create({ name });
+        team = await TeamModel.create({ name });
     }
     return team;
 }
@@ -71,14 +83,24 @@ async function getOrCreateTeam(name) {
 
 exports.handler = async (event) => {
   try {
-    await dbConnect();
+    const secrets = await getSecrets();
+    const { SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI } = secrets;
+
+    if (!SOCCERS_API_USER || !SOCCERS_API_TOKEN || !MONGO_URI) {
+        throw new Error("Required secrets (SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI) not found in SSM Parameter Store.");
+    }
+
+    await dbConnect(MONGO_URI);
     console.log("DB connected");
+
+    const Team = mongoose.models.Team || mongoose.model("Team", TeamSchema);
+    const Match = mongoose.models.Match || mongoose.model("Match", MatchSchema);
 
     // 1. Fetch live/upcoming matches from Soccer’sAPI
     const soccerRes = await axios.get("https://api.soccersapi.com/v2.2/fixtures/", {
       params: {
-        user: process.env.SOCCERS_API_USER,
-        token: process.env.SOCCERS_API_TOKEN,
+        user: SOCCERS_API_USER,
+        token: SOCCERS_API_TOKEN,
         t: "upcoming",
       },
     });
@@ -93,8 +115,8 @@ exports.handler = async (event) => {
         const existingMatch = await Match.findOne({ externalId: String(matchData.id) });
         if (existingMatch) continue;
 
-        const homeTeam = await getOrCreateTeam(matchData.home.name);
-        const awayTeam = await getOrCreateTeam(matchData.away.name);
+        const homeTeam = await getOrCreateTeam(Team, matchData.home.name);
+        const awayTeam = await getOrCreateTeam(Team, matchData.away.name);
 
         await Match.create({
             source: 'soccersapi',
@@ -125,8 +147,8 @@ exports.handler = async (event) => {
         const existingMatch = await Match.findOne({ externalId });
         if (existingMatch) continue;
 
-        const homeTeam = await getOrCreateTeam(matchData.team1);
-        const awayTeam = await getOrCreateTeam(matchData.team2);
+        const homeTeam = await getOrCreateTeam(Team, matchData.team1);
+        const awayTeam = await getOrCreateTeam(Team, matchData.team2);
 
         await Match.create({
             source: 'footballjson',

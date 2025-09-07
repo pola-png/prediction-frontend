@@ -14,25 +14,11 @@ Parameters will be of the form { Name: 'secretName', Value: 'secretValue', ... }
 */
 const axios = require("axios");
 const mongoose = require("mongoose");
+const aws = require('aws-sdk');
 const { Schema } = mongoose;
 
-// Config
-const MONGO_URI = process.env.MONGO_URI;
 
-// DB Connection
-let conn = null;
-async function dbConnect() {
-  if (conn == null) {
-    conn = mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-      bufferCommands: false,
-    }).then(() => mongoose);
-    await conn;
-  }
-  return conn;
-}
-
-// Schemas
+// --- Mongoose Schemas ---
 const MatchSchema = new Schema({
   source: String,
   externalId: { type: String, unique: true, sparse: true },
@@ -49,18 +35,55 @@ const MatchSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-const Match = mongoose.models.Match || mongoose.model("Match", MatchSchema);
+// --- Database Connection ---
+let conn = null;
+async function dbConnect(mongoUri) {
+  if (conn == null) {
+    conn = mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000,
+      bufferCommands: false,
+    }).then(() => mongoose);
+    await conn;
+  }
+  return conn;
+}
+
+
+// --- Helper Functions ---
+async function getSecrets() {
+    const ssm = new aws.SSM();
+    const { Parameters } = await ssm.getParameters({
+        Names: ["SOCCERS_API_USER", "SOCCERS_API_TOKEN", "MONGO_URI"].map(secretName => process.env[secretName]),
+        WithDecryption: true,
+    }).promise();
+
+    const secrets = {};
+    for (const param of Parameters) {
+        const secretName = param.Name.split('/').pop();
+        secrets[secretName] = param.Value;
+    }
+    return secrets;
+}
 
 
 exports.handler = async (event) => {
   try {
-    await dbConnect();
+    const secrets = await getSecrets();
+    const { SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI } = secrets;
+
+     if (!SOCCERS_API_USER || !SOCCERS_API_TOKEN || !MONGO_URI) {
+        throw new Error("Required secrets (SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI) not found in SSM Parameter Store.");
+    }
+
+    await dbConnect(MONGO_URI);
     console.log("DB Connected");
+
+    const Match = mongoose.models.Match || mongoose.model("Match", MatchSchema);
 
     const soccerRes = await axios.get("https://api.soccersapi.com/v2.2/fixtures/", {
       params: {
-        user: process.env.SOCCERS_API_USER,
-        token: process.env.SOCCERS_API_TOKEN,
+        user: SOCCERS_API_USER,
+        token: SOCCERS_API_TOKEN,
         t: "results",
       },
     });
