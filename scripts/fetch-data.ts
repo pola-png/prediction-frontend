@@ -5,6 +5,7 @@ import MatchModel from '@/models/Match';
 import dbConnect from '@/lib/mongodb';
 import TeamModel from '@/models/Team';
 import fetch from 'node-fetch';
+import { fetchFromSoccerDataApi } from '@/services/soccerdata-service';
 
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/openfootball/football.json/master';
 
@@ -37,7 +38,7 @@ function slugify(text: string): string {
         .replace(/-+$/, '');         // Trim - from end of text
 }
 
-async function getTeam(teamName: string): Promise<any> {
+export async function getTeam(teamName: string): Promise<any> {
     const slug = slugify(teamName);
     if (teamCache.has(slug)) {
         return teamCache.get(slug);
@@ -57,7 +58,7 @@ async function getTeam(teamName: string): Promise<any> {
 }
 
 
-async function updateOrCreateMatch(matchData: Partial<Match>) {
+export async function updateOrCreateMatch(matchData: Partial<Match>) {
     const homeTeam = await getTeam(matchData.homeTeam!.name);
     const awayTeam = await getTeam(matchData.awayTeam!.name);
 
@@ -66,7 +67,7 @@ async function updateOrCreateMatch(matchData: Partial<Match>) {
         ...matchData,
         homeTeam: homeTeam._id,
         awayTeam: awayTeam._id,
-        status: 'finished' as 'finished', // All historical data is finished
+        status: matchData.status || 'finished',
         lastUpdatedAt: new Date(),
     };
 
@@ -76,20 +77,28 @@ async function updateOrCreateMatch(matchData: Partial<Match>) {
 async function fetchFromSource(name: string, fetchFn: () => Promise<any[]>, transformFn: (item: any, leagueName: string) => Promise<void>) {
     console.log(`Fetching from ${name}...`);
     try {
-        const leagues = await fetchFn();
-        if (!leagues || leagues.length === 0) {
-            console.log(`No leagues found from ${name}.`);
+        const items = await fetchFn();
+        if (!items || items.length === 0) {
+            console.log(`No data found from ${name}.`);
             return;
         }
-        for (const league of leagues) {
-            const leagueName = league.name;
-            if (!league.matches || league.matches.length === 0) {
-                console.log(`No matches found for league ${leagueName}.`);
-                continue;
+
+        if (name === 'football.json') {
+             for (const league of items) {
+                const leagueName = league.name;
+                if (!league.matches || league.matches.length === 0) {
+                    console.log(`No matches found for league ${leagueName}.`);
+                    continue;
+                }
+                console.log(`Processing ${league.matches.length} matches for ${leagueName}...`);
+                for (const item of league.matches) {
+                    await transformFn(item, leagueName);
+                }
             }
-            console.log(`Processing ${league.matches.length} matches for ${leagueName}...`);
-            for (const item of league.matches) {
-                await transformFn(item, leagueName);
+        } else {
+             console.log(`Processing ${items.length} matches from ${name}...`);
+            for (const item of items) {
+                 await transformFn(item, 'live');
             }
         }
         console.log(`Successfully fetched and processed items from ${name}.`);
@@ -109,7 +118,17 @@ const leaguesToFetch = [
 
 async function main() {
     await dbConnect();
+    
+    // Fetch live data first
+    await fetchFromSource(
+        'soccerdataapi',
+        fetchFromSoccerDataApi,
+        async (match) => {
+            await updateOrCreateMatch(match);
+        }
+    )
 
+    // Then fetch historical data
     await fetchFromSource(
         'football.json',
         async () => {
