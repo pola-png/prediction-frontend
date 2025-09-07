@@ -9,30 +9,41 @@ import type { IPrediction } from '@/models/Prediction';
 import type { Match } from "@/lib/types";
 import { sanitizeObject } from "@/lib/utils";
 
-export async function getMatchesForBucket(bucket: string, limit = 10) {
+export async function getMatchesForBucket(bucket?: string | string[], limit = 10): Promise<Match[]> {
     await dbConnect();
 
     // Ensure models are registered
     const Match = MatchModel;
     const Prediction = PredictionModel;
     const Team = TeamModel;
+    
+    const predictionFilter: { bucket?: any } = {};
+    if (bucket) {
+        if (Array.isArray(bucket)) {
+            predictionFilter.bucket = { $in: bucket };
+        } else {
+            predictionFilter.bucket = bucket;
+        }
+    }
 
-    // 1. Find predictions that match the bucket
-    const predictions = await Prediction.find({ bucket: bucket }).select('_id matchId').lean();
+    // 1. Find predictions that match the bucket(s)
+    const predictions = await Prediction.find(predictionFilter).select('_id matchId').lean();
     const matchIds = predictions.map(p => p.matchId);
 
-    // 2. Find upcoming matches that correspond to those predictions and have a prediction linked
-    const matches = await Match.find({
+    const findQuery: any = {
       _id: { $in: matchIds },
       status: 'scheduled',
       matchDateUtc: { $gte: new Date() },
-      prediction: { $exists: true, $ne: null } // <-- Ensure prediction exists
-    })
+      prediction: { $exists: true, $ne: null }
+    };
+
+    // 2. Find upcoming matches that correspond to those predictions
+    const matches = await Match.find(findQuery)
     .populate('homeTeam')
     .populate('awayTeam')
     .populate('prediction')
     .sort({ matchDateUtc: 1 })
-    .limit(limit)
+    .limit(Array.isArray(bucket) ? 100 : limit) // Increase limit if fetching for all buckets
     .lean();
 
     return sanitizeObject<Match[]>(matches);

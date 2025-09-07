@@ -19,6 +19,7 @@ import { MatchCard } from '@/components/match-card';
 import { getUpcomingMatches, getRecentResults } from '@/services/sports-data-service';
 import { getMatchesForBucket } from '@/services/predictions-service';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Match } from '@/lib/types';
 
 
 const predictionBuckets = [
@@ -54,11 +55,22 @@ const predictionBuckets = [
 
 async function getBucketCounts() {
   const buckets = ['vip', '2odds', '5odds', 'big10'];
-  const counts: Record<string, number> = {};
-  for (const bucket of buckets) {
-      const matches = await getMatchesForBucket(bucket, 100);
-      counts[bucket] = matches.length;
-  }
+  const allMatchesInBuckets = await getMatchesForBucket(buckets, 1000);
+  
+  const counts = allMatchesInBuckets.reduce((acc, match) => {
+    if (match.prediction?.bucket) {
+      acc[match.prediction.bucket] = (acc[match.prediction.bucket] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Ensure all buckets have a count, even if it's 0
+  buckets.forEach(bucket => {
+    if (!counts[bucket]) {
+      counts[bucket] = 0;
+    }
+  });
+
   return counts;
 }
 
