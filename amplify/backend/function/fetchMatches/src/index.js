@@ -60,7 +60,7 @@ async function dbConnect() {
 }
 
 
-async function getOrCreaeTeam(name) {
+async function getOrCreateTeam(name) {
     let team = await Team.findOne({ name });
     if (!team) {
         team = await Team.create({ name });
@@ -93,8 +93,8 @@ exports.handler = async (event) => {
         const existingMatch = await Match.findOne({ externalId: String(matchData.id) });
         if (existingMatch) continue;
 
-        const homeTeam = await getOrCreaeTeam(matchData.home.name);
-        const awayTeam = await getOrCreaeTeam(matchData.away.name);
+        const homeTeam = await getOrCreateTeam(matchData.home.name);
+        const awayTeam = await getOrCreateTeam(matchData.away.name);
 
         await Match.create({
             source: 'soccersapi',
@@ -125,8 +125,8 @@ exports.handler = async (event) => {
         const existingMatch = await Match.findOne({ externalId });
         if (existingMatch) continue;
 
-        const homeTeam = await getOrCreaeTeam(matchData.team1);
-        const awayTeam = await getOrCreaeTeam(matchData.team2);
+        const homeTeam = await getOrCreateTeam(matchData.team1);
+        const awayTeam = await getOrCreateTeam(matchData.team2);
 
         await Match.create({
             source: 'footballjson',

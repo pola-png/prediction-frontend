@@ -25,7 +25,12 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-preview" });
 
 // --- Mongoose Schemas ---
-const TeamSchema = new Schema({ name: String, logoUrl: String });
+const TeamSchema = new Schema({
+    _id: { type: Schema.Types.ObjectId, auto: true },
+    name: { type: String, required: true, unique: true },
+    logoUrl: String,
+});
+
 const PredictionSchema = new Schema({
     matchId: { type: Schema.Types.ObjectId, ref: "Match", required: true },
     version: String,
@@ -48,15 +53,21 @@ const PredictionSchema = new Schema({
     bucket: String,
     createdAt: { type: Date, default: Date.now },
 });
+
 const MatchSchema = new Schema({
-    homeTeam: { type: Schema.Types.ObjectId, ref: "Team" },
-    awayTeam: { type: Schema.Types.ObjectId, ref: "Team" },
-    status: String,
-    matchDateUtc: Date,
-    leagueCode: String,
-    homeGoals: Number,
-    awayGoals: Number,
-    prediction: { type: Schema.Types.ObjectId, ref: "Prediction" }
+  source: String,
+  externalId: { type: String, unique: true, sparse: true },
+  leagueCode: String,
+  matchDateUtc: Date,
+  status: String,
+  homeTeam: { type: Schema.Types.ObjectId, ref: "Team" },
+  awayTeam: { type: Schema.Types.ObjectId, ref: "Team" },
+  homeGoals: Number,
+  awayGoals: Number,
+  tags: [String],
+  prediction: { type: Schema.Types.ObjectId, ref: "Prediction" },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const Team = mongoose.models.Team || mongoose.model("Team", TeamSchema);
@@ -148,7 +159,7 @@ Based on this, provide probabilities (0-1) for:
 - A confidence score (50-100)
 - A prediction bucket ('vip', '2odds', '5odds', 'big10')
 
-Your response MUST be a valid JSON object.
+Your response MUST be a valid JSON object that conforms to the Zod schema provided in the system instructions.
 `;
         const predictionResult = await callGenerativeAI(prompt);
         

@@ -34,11 +34,19 @@ async function dbConnect() {
 
 // Schemas
 const MatchSchema = new Schema({
-  externalId: String,
+  source: String,
+  externalId: { type: String, unique: true, sparse: true },
+  leagueCode: String,
+  matchDateUtc: Date,
   status: String,
+  homeTeam: { type: Schema.Types.ObjectId, ref: "Team" },
+  awayTeam: { type: Schema.Types.ObjectId, ref: "Team" },
   homeGoals: Number,
   awayGoals: Number,
-  updatedAt: Date,
+  tags: [String],
+  prediction: { type: Schema.Types.ObjectId, ref: "Prediction" },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const Match = mongoose.models.Match || mongoose.model("Match", MatchSchema);

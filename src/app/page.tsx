@@ -164,7 +164,7 @@ export default async function HomePage() {
                 <Button asChild size="sm" className="ml-auto gap-1">
                   <Link href="/results">
                     View All
-                    <ArrowUpright className="h-4 w-4" />
+                    <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 </Button>
               </CardHeader>
