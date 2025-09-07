@@ -107,27 +107,25 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
     const Team = TeamModel;
     const Prediction = PredictionModel;
 
-    const upcomingMatches: Match[] = await MatchModel.find({
+    const upcomingMatches = await MatchModel.find({
         status: 'scheduled',
         matchDateUtc: { $gte: new Date() }
     })
+    .populate('homeTeam')
+    .populate('awayTeam')
+    .populate('prediction')
     .sort({ matchDateUtc: 1 })
     .limit(limit)
-    .lean({ virtuals: true });
+    .lean();
     
     const matchesWithoutPrediction = upcomingMatches.filter(m => !m.prediction);
 
     if (matchesWithoutPrediction.length > 0) {
         console.log(`Found ${matchesWithoutPrediction.length} upcoming matches without predictions. Generating them now...`);
-        // We need to populate the team data before sending it to the prediction service
-        const matchesToPredict = await MatchModel.find({
-            _id: { $in: matchesWithoutPrediction.map(m => m._id) }
-        }).populate('homeTeam').populate('awayTeam').lean();
-
-        await getAndGeneratePredictions(matchesToPredict);
+        await getAndGeneratePredictions(matchesWithoutPrediction as Match[]);
 
         // Re-fetch all matches to include the newly generated predictions
-        const matchesWithPredictions: Match[] = await MatchModel.find({
+        const matchesWithPredictions = await MatchModel.find({
             _id: { $in: upcomingMatches.map(m => m._id) }
         })
         .populate('homeTeam')
@@ -135,23 +133,11 @@ export async function getUpcomingMatches(limit = 15): Promise<Match[]> {
         .populate('prediction')
         .sort({ matchDateUtc: 1 })
         .limit(limit)
-        .lean({ virtuals: true });
+        .lean();
          return sanitizeObject<Match[]>(matchesWithPredictions);
     }
 
-
-    // If all matches already have predictions, populate them for the initial return
-    const populatedMatches = await MatchModel.find({
-      _id: { $in: upcomingMatches.map(m => m._id) }
-    })
-    .populate('homeTeam')
-    .populate('awayTeam')
-    .populate('prediction')
-    .sort({ matchDateUtc: 1 })
-    .limit(limit)
-    .lean({ virtuals: true });
-
-    return sanitizeObject<Match[]>(populatedMatches);
+    return sanitizeObject<Match[]>(upcomingMatches as Match[]);
 }
 
 export async function getAllMatches(): Promise<Match[]> {
