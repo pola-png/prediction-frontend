@@ -7,8 +7,7 @@ import '@/models/Match';
 import '@/models/Prediction';
 import '@/models/History';
 
-
-const MONGODB_URI = process.env.MONGO_URI;
+const MONGODB_URI = "mongodb+srv://polamedian:Olami172@cluster0.mn13hxj.mongodb.net/predictionDB?retryWrites=true&w=majority&appName=Cluster0";
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -22,29 +21,40 @@ if (MONGODB_URI === 'YOUR_MONGODB_CONNECTION_STRING_HERE') {
     );
 }
 
-let cached = global.mongoose;
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections from growing exponentially
+ * during API Route usage.
+ */
+let cached = (global as any).mongoose
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null }
 }
 
 async function dbConnect() {
   if (cached.conn) {
-    return cached.conn;
+    return cached.conn
   }
 
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-    };
+    }
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      return mongoose;
-    });
+      return mongoose
+    })
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+  
+  try {
+    cached.conn = await cached.promise
+  } catch (e) {
+    cached.promise = null
+    throw e
+  }
+
+  return cached.conn
 }
 
 export default dbConnect;
-
