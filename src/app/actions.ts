@@ -1,22 +1,50 @@
-
 'use server';
 
-// This file is now largely obsolete as the primary logic has moved to Lambda functions.
-// The getMatchSummary function might be re-purposed later to call a Lambda
-// or an AppSync resolver that invokes the AI summarization flow.
+import dbConnect from '@/lib/mongodb';
+import Match from '@/models/Match';
+import Prediction from '@/models/Prediction';
+import Team from '@/models/Team';
+import { summarizeMatchInsights } from '@/ai/flows/summarize-match-insights';
+import { sanitizeObject } from '@/lib/utils';
+import type { SummarizeMatchInsightsInput, Match as MatchType } from '@/lib/types';
 
-// For now, we return a static message.
 
-interface SummarizeMatchInsightsInput {
-    matchId: string;
-    // other fields...
-}
-
-export async function getMatchSummary(input: SummarizeMatchInsightsInput) {
+export async function getMatchSummary(input: { matchId: string }) {
   try {
-    return { summary: "AI summary is currently handled by a backend Lambda function and is not available via this endpoint." };
+    await dbConnect();
+    // Ensure models are registered
+    Team;
+    Prediction;
+    
+    const match = await Match.findById(input.matchId)
+        .populate('prediction')
+        .populate('homeTeam')
+        .populate('awayTeam')
+        .lean() as MatchType | null;
+
+    if (!match || !match.prediction) {
+      return { error: "Prediction not found for this match." };
+    }
+
+    // This check is important because the lean object might not have the nested populated documents
+     if (!match.homeTeam || !match.awayTeam) {
+      return { error: 'Could not load team details for summary.' };
+    }
+
+    const summaryInput: SummarizeMatchInsightsInput = {
+      matchId: match._id.toString(),
+      homeTeamName: match.homeTeam.name,
+      awayTeamName: match.awayTeam.name,
+      prediction: sanitizeObject(match.prediction),
+      features: match.prediction.features!,
+    };
+
+    const summary = await summarizeMatchInsights(summaryInput);
+
+    return { summary: summary.summary };
   } catch (error) {
     console.error("Failed to fetch match summary", error);
-    return { error: "Could not load AI summary for this match." };
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return { error: `Could not load AI summary for this match. ${errorMessage}` };
   }
 }

@@ -10,9 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "predict": "tsx scripts/run-predictions.ts",
-    "process-results": "tsx scripts/process-results.ts"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",

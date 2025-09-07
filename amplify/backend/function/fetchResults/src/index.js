@@ -5,81 +5,99 @@ const aws = require('aws-sdk');
 
 const { Parameters } = await (new aws.SSM())
   .getParameters({
-    Names: ["SOCCERS_API_USER","SOCCERS_API_TOKEN"].map(secretName => process.env[secretName]),
+    Names: ["SOCCERS_API_USER","SOCCERS_API_TOKEN","MONGO_URI"].map(secretName => process.env[secretName]),
     WithDecryption: true,
   })
   .promise();
 
 Parameters will be of the form { Name: 'secretName', Value: 'secretValue', ... }[]
 */
-/*
-Copyright 2017 - 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
-    http://aws.amazon.com/apache2.0/
-or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-*/
-
 const axios = require("axios");
-const AWS = require("aws-sdk");
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-const RESULTS_TABLE = process.env.RESULTS_TABLE;
-const SOCCERS_API_USER = process.env.SOCCERS_API_USER;
-const SOCCERS_API_TOKEN = process.env.SOCCERS_API_TOKEN;
+// Config
+const MONGO_URI = process.env.MONGO_URI;
 
-/**
- * @type {import('@types/aws-lambda').APIGatewayProxyHandler}
- */
+// DB Connection
+let conn = null;
+async function dbConnect() {
+  if (conn == null) {
+    conn = mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,
+      bufferCommands: false,
+    }).then(() => mongoose);
+    await conn;
+  }
+  return conn;
+}
+
+// Schemas
+const MatchSchema = new Schema({
+  externalId: String,
+  status: String,
+  homeGoals: Number,
+  awayGoals: Number,
+  updatedAt: Date,
+});
+
+const Match = mongoose.models.Match || mongoose.model("Match", MatchSchema);
+
+
 exports.handler = async (event) => {
-    console.log(`EVENT: ${JSON.stringify(event)}`);
-    try {
-        const soccerRes = await axios.get("https://api.soccersapi.com/v2.2/fixtures/", {
-          params: {
-            user: SOCCERS_API_USER,
-            token: SOCCERS_API_TOKEN,
-            t: "results", // Fetch recent results
-          },
-        });
+  try {
+    await dbConnect();
+    console.log("DB Connected");
 
-        const results = soccerRes.data.data || [];
-        console.log(`Fetched ${results.length} results from SoccersAPI.`);
+    const soccerRes = await axios.get("https://api.soccersapi.com/v2.2/fixtures/", {
+      params: {
+        user: process.env.SOCCERS_API_USER,
+        token: process.env.SOCCERS_API_TOKEN,
+        t: "results",
+      },
+    });
 
-        for (const match of results) {
-            if (!match.id || !match.score) continue;
-            
-            const [homeGoals, awayGoals] = match.score.ft_score.split('-').map(Number);
-            
-            const Item = {
-                id: String(match.id),
-                home: match.home.name,
-                away: match.away.name,
-                start: match.date_time,
-                status: match.status,
-                league: match.league.name,
-                homeGoals,
-                awayGoals,
-                resolvedAt: new Date().toISOString(),
-            };
-            
-            await dynamoDB.put({
-                TableName: RESULTS_TABLE,
-                Item,
-            }).promise();
+    const results = soccerRes.data.data || [];
+    let updatedCount = 0;
+    console.log(`Fetched ${results.length} results from SoccersAPI.`);
+
+    for (const matchResult of results) {
+        if (!matchResult.id || !matchResult.score || matchResult.status !== 'finished') continue;
+
+        const [homeGoals, awayGoals] = matchResult.score.ft_score.split('-').map(Number);
+
+        const updated = await Match.findOneAndUpdate(
+            { externalId: String(matchResult.id) },
+            {
+                $set: {
+                    status: 'finished',
+                    homeGoals,
+                    awayGoals,
+                    updatedAt: new Date(),
+                }
+            },
+            { new: true } // returns the updated document
+        );
+        
+        if(updated) {
+            updatedCount++;
         }
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ success: true, count: results.length }),
-        };
-    } catch (error) {
-        console.error("Fetching results failed:", error.message);
-        if (error.response) {
-            console.error("API Response:", error.response.data);
-        }
-        return { 
-            statusCode: 500,
-            body: JSON.stringify({ success: false, error: error.message })
-        };
     }
+    
+    console.log(`Updated ${updatedCount} matches with results.`);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true, updatedCount }),
+    };
+  } catch (error) {
+    console.error("Fetching results failed:", error.message);
+    if (error.response) {
+      console.error("API Response:", error.response.data);
+    }
+    return { 
+      statusCode: 500,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
 };

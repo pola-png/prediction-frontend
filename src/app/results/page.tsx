@@ -1,13 +1,18 @@
 
-'use client';
-
 import * as React from 'react';
+import { Suspense } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { MatchCard } from '@/components/match-card';
 import type { Match } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import dbConnect from '@/lib/mongodb';
+import MatchModel from '@/models/Match';
+import Team from '@/models/Team';
+import Prediction from '@/models/Prediction';
+import { sanitizeObject } from '@/lib/utils';
+
 
 const ListSkeleton = () => (
   <div className='space-y-4'>
@@ -19,21 +24,42 @@ const ListSkeleton = () => (
   </div>
 );
 
+async function getRecentMatches(): Promise<Match[]> {
+    await dbConnect();
+    // Ensure models are registered
+    Team;
+    Prediction;
+
+    const matches = await MatchModel.find({ status: 'finished' })
+        .sort({ matchDateUtc: -1 })
+        .limit(50)
+        .populate('homeTeam')
+        .populate('awayTeam')
+        .populate('prediction')
+        .lean();
+    
+    return sanitizeObject(matches);
+}
+
+
+async function ResultsList() {
+    const recentMatches = await getRecentMatches();
+    return (
+        <>
+            {recentMatches.length > 0 ? (
+                recentMatches.map((match: Match) => (
+                    <MatchCard key={match._id} match={match} />
+                ))
+            ) : (
+                <div className="text-center text-muted-foreground py-8">
+                    No recent results available.
+                </div>
+            )}
+        </>
+    );
+}
 
 export default function ResultsPage() {
-  const [recentMatches, setRecentMatches] = React.useState<Match[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-   React.useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-        // TODO: Replace with actual API call
-        setRecentMatches([]);
-        setLoading(false);
-    }, 1000);
-  }, []);
-
-
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -53,19 +79,9 @@ export default function ResultsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {loading ? <ListSkeleton /> : (
-                  <>
-                    {recentMatches.length > 0 ? (
-                        recentMatches.map((match: Match) => (
-                            <MatchCard key={match._id} match={match} />
-                        ))
-                    ) : (
-                        <div className="text-center text-muted-foreground py-8">
-                            No recent results available.
-                        </div>
-                    )}
-                  </>
-                )}
+                <Suspense fallback={<ListSkeleton />}>
+                    <ResultsList />
+                </Suspense>
               </CardContent>
             </Card>
         </main>
@@ -73,3 +89,5 @@ export default function ResultsPage() {
     </SidebarProvider>
   );
 }
+
+export const dynamic = 'force-dynamic';

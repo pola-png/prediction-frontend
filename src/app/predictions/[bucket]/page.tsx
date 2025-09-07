@@ -1,13 +1,13 @@
 
-'use client';
-
 import * as React from 'react';
+import { Suspense } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import type { Match } from '@/lib/types';
 import { PredictionCard } from '@/components/prediction-card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getMatchesForBucket } from '@/services/predictions-service';
 
 
 const bucketDetails: Record<string, { title: string, description: string }> = {
@@ -25,23 +25,87 @@ const ListSkeleton = () => (
   </div>
 );
 
+function groupMatchesIntoAccumulators(matches: Match[], targetOdds: number): Match[][] {
+  const accumulators: Match[][] = [];
+  let currentAccumulator: Match[] = [];
+  let currentTotalOdds = 1.0;
+
+  for (const match of matches) {
+    if (!match.prediction) continue;
+    
+    const { home, away, draw } = match.prediction.outcomes.oneXTwo;
+    const maxProb = Math.max(home, away, draw);
+    if (maxProb === 0) continue;
+    const outcomeOdds = 1 / maxProb;
+
+    if (currentAccumulator.length > 0 && (currentTotalOdds * outcomeOdds > targetOdds * 1.5)) {
+      accumulators.push(currentAccumulator);
+      currentAccumulator = [];
+      currentTotalOdds = 1.0;
+    }
+    
+    currentAccumulator.push(match);
+    currentTotalOdds *= outcomeOdds;
+
+    if (currentTotalOdds >= targetOdds) {
+      accumulators.push(currentAccumulator);
+      currentAccumulator = [];
+      currentTotalOdds = 1.0;
+    }
+  }
+
+  if (currentAccumulator.length > 0) {
+    accumulators.push(currentAccumulator);
+  }
+
+  return accumulators;
+}
+
+
+async function PredictionsList({ bucket }: { bucket: string }) {
+  const matches = await getMatchesForBucket(bucket);
+  
+  let targetOdds = 2.0;
+  if(bucket === '5odds') targetOdds = 5.0;
+  if(bucket === 'big10') targetOdds = 10.0;
+  if(bucket === 'vip') targetOdds = 1.5;
+
+
+  const accumulators = groupMatchesIntoAccumulators(matches, targetOdds);
+
+  const calculateTotalOdds = (acc: Match[]) => {
+      return acc.reduce((total, match) => {
+          if (!match.prediction) return total;
+          const { home, away, draw } = match.prediction.outcomes.oneXTwo;
+          const maxProb = Math.max(home, away, draw);
+          if (maxProb === 0) return total;
+          return total * (1 / maxProb);
+      }, 1.0).toFixed(2);
+  }
+
+  return (
+    <>
+      {accumulators.length > 0 ? (
+          accumulators.map((accumulator, index) => (
+              <PredictionCard 
+                  key={index} 
+                  matches={accumulator} 
+                  totalOdds={calculateTotalOdds(accumulator)}
+              />
+          ))
+      ) : (
+          <div className="text-center text-muted-foreground py-8">
+              No predictions available in this bucket for the upcoming matches.
+          </div>
+      )}
+    </>
+  )
+}
+
 
 export default function BucketPage({ params }: { params: { bucket: string } }) {
   const { bucket } = params;
   const details = bucketDetails[bucket] || { title: 'Predictions', description: 'Browse predictions by category.' };
-  
-  const [matches, setMatches] = React.useState<Match[][]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-        // TODO: Replace with actual API call to get predictions for this bucket
-        setMatches([]);
-        setLoading(false);
-    }, 1000);
-  }, [bucket]);
-
 
   return (
     <SidebarProvider>
@@ -62,23 +126,9 @@ export default function BucketPage({ params }: { params: { bucket: string } }) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {loading ? <ListSkeleton /> : (
-                  <>
-                  {matches.length > 0 ? (
-                      matches.map((accumulator, index) => (
-                          <PredictionCard 
-                              key={index} 
-                              matches={accumulator} 
-                              totalOdds={"1.00"} // Placeholder
-                          />
-                      ))
-                  ) : (
-                      <div className="text-center text-muted-foreground py-8">
-                          No predictions available in this bucket for the upcoming matches.
-                      </div>
-                  )}
-                  </>
-                )}
+                <Suspense fallback={<ListSkeleton />}>
+                  <PredictionsList bucket={bucket} />
+                </Suspense>
               </CardContent>
             </Card>
         </main>
@@ -86,3 +136,5 @@ export default function BucketPage({ params }: { params: { bucket: string } }) {
     </SidebarProvider>
   );
 }
+
+export const dynamic = 'force-dynamic';
