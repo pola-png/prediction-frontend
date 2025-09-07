@@ -15,11 +15,6 @@ frontend:
     paths:
       - .next/cache/**/*
       - node_modules/**/*
-backend:
-  phases:
-    build:
-      commands:
-        - amplifyPush --simple
 env:
   variables:
     NODE_ENV: production
