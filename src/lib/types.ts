@@ -66,6 +66,29 @@ export const GetPredictionParametersInputSchema = z.object({
 });
 export type GetPredictionParametersInput = z.infer<typeof GetPredictionParametersInputSchema>;
 
+export const CalculateMatchStatsInputSchema = z.object({
+    teamAName: z.string(),
+    teamBName: z.string(),
+    matches: z.array(z.object({
+        date: z.string(),
+        homeTeam: z.string(),
+        awayTeam: z.string(),
+        homeGoals: z.number(),
+        awayGoals: z.number(),
+    }))
+});
+export type CalculateMatchStatsInput = z.infer<typeof CalculateMatchStatsInputSchema>;
+
+
+export const CalculateMatchStatsOutputSchema = z.object({
+  teamAForm: z.string(),
+  teamBForm: z.string(),
+  headToHeadStats: z.string(),
+  teamAGoals: z.string(),
+  teamBGoals: z.string(),
+});
+export type CalculateMatchStatsOutput = z.infer<typeof CalculateMatchStatsOutputSchema>;
+
 
 export const GenerateMatchPredictionsOutputSchema = z.object({
   oneXTwo: z.object({ home: z.number(), draw: z.number(), away: z.number() }),
