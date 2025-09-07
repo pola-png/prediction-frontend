@@ -7,7 +7,7 @@ import '@/models/Match';
 import '@/models/Prediction';
 import '@/models/History';
 
-const MONGODB_URI = "mongodb+srv://polamedian:Olami172@cluster0.mn13hxj.mongodb.net/predictionDB?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URI = process.env.MONGO_URI;
 
 if (!MONGODB_URI) {
   throw new Error(
