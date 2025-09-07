@@ -2,7 +2,84 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { fetchFromSoccersApi } from '@/services/soccersapi-service';
-import { updateOrCreateMatch } from '@/scripts/fetch-data';
+import { updateOrCreateMatch, getTeam } from '@/scripts/fetch-data';
+import fetch from 'node-fetch';
+
+
+interface FootballJsonMatch {
+    date: string; 
+    team1: string;
+    team2: string;
+    score: {
+        ft: [number, number];
+    };
+    round: string;
+}
+
+interface FootballJsonLeague {
+    name: string;
+    matches: FootballJsonMatch[];
+}
+
+const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/openfootball/football.json/master';
+const leaguesToFetch = [
+    '2023-24/en.1.json', // English Premier League
+    '2023-24/es.1.json', // Spanish La Liga
+    '2023-24/de.1.json', // German Bundesliga
+    '2023-24/it.1.json', // Italian Serie A
+    '2023-24/fr.1.json', // French Ligue 1
+];
+
+// Helper function to create a slug from a team name
+function slugify(text: string): string {
+    return text
+        .toString()
+        .toLowerCase()
+        .replace(/\s+/g, '-')       // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')   // Remove all non-word chars
+        .replace(/\-\-+/g, '-')     // Replace multiple - with single -
+        .replace(/^-+/, '')          // Trim - from start of text
+        .replace(/-+$/, '');         // Trim - from end of text
+}
+
+
+async function fetchHistoricalData() {
+    let count = 0;
+    for(const leagueFile of leaguesToFetch) {
+        try {
+            const response = await fetch(`${GITHUB_BASE_URL}/${leagueFile}`);
+            if (response.ok) {
+                const data: FootballJsonLeague = await response.json() as FootballJsonLeague;
+                const leagueName = data.name;
+
+                 for (const match of data.matches) {
+                    if (!match.team1 || !match.team2 || !match.score) continue;
+
+                    const matchData: Partial<any> = {
+                        source: 'footballjson',
+                        externalId: `${match.date}-${slugify(match.team1)}-${slugify(match.team2)}`, 
+                        leagueCode: leagueName,
+                        season: '2023/2024',
+                        matchDateUtc: new Date(match.date).toISOString(),
+                        status: 'finished',
+                        homeTeam: { name: match.team1 },
+                        awayTeam: { name: match.team2 },
+                        homeGoals: match.score.ft[0],
+                        awayGoals: match.score.ft[1],
+                    };
+                    await updateOrCreateMatch(matchData);
+                    count++;
+                }
+            } else {
+                console.warn(`API: Failed to fetch ${leagueFile}: ${response.statusText}`);
+            }
+        } catch(error) {
+            console.error(`API: Error fetching ${leagueFile}:`, error);
+        }
+    }
+    return count;
+}
+
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,27 +90,31 @@ export async function GET(request: Request) {
   try {
     await dbConnect();
 
+    // 1. Fetch Live Data
     console.log('API: Starting live data fetch from SoccersAPI...');
     const matchesFromApi = await fetchFromSoccersApi();
-    
-    if (matchesFromApi.length === 0) {
-        console.log('API: No new matches found from SoccersAPI.');
-        return NextResponse.json({ message: 'No new matches found from SoccersAPI.' });
+    let liveProcessedCount = 0;
+    if (matchesFromApi.length > 0) {
+        for (const matchData of matchesFromApi) {
+            await updateOrCreateMatch(matchData);
+            liveProcessedCount++;
+        }
     }
-    
-    let processedCount = 0;
-    for (const matchData of matchesFromApi) {
-        await updateOrCreateMatch(matchData);
-        processedCount++;
-    }
+    console.log(`API: Processed ${liveProcessedCount} live matches from SoccersAPI.`);
 
-    const message = `Successfully fetched and processed ${processedCount} matches from SoccersAPI.`;
+    // 2. Fetch Historical Data
+    console.log('API: Starting historical data fetch from football.json...');
+    const historicalProcessedCount = await fetchHistoricalData();
+    console.log(`API: Processed ${historicalProcessedCount} historical matches from football.json.`);
+
+
+    const message = `Data fetch complete. Processed ${liveProcessedCount} live matches and ${historicalProcessedCount} historical matches.`;
     console.log(`API: ${message}`);
     
-    return NextResponse.json({ message });
+    return NextResponse.json({ message, liveProcessedCount, historicalProcessedCount });
 
   } catch (error: any) {
-    console.error('Failed to fetch live data via API:', error);
+    console.error('Failed to fetch data via API:', error);
     return NextResponse.json({ message: 'Internal Server Error', error: error.message }, { status: 500 });
   }
 }
