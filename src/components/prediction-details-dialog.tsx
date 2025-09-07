@@ -14,16 +14,18 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { getMatchSummary } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Separator } from './ui/separator';
-import { Terminal, ShieldQuestion } from 'lucide-react';
+import { Terminal } from 'lucide-react';
+import axios from 'axios';
 
 interface PredictionDetailsDialogProps {
   match: Match;
   children: ReactNode;
 }
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
 
 const ProbabilityBar = ({ label, value, variant }: { label: string; value: number; variant?: 'default' | 'primary' }) => (
     <div className="w-full">
@@ -47,22 +49,24 @@ const PredictionGridItem = ({ title, value }: { title: string; value: string }) 
 export function PredictionDetailsDialog({ match, children }: PredictionDetailsDialogProps) {
     const [summary, setSummary] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
         if (open && match.prediction && !summary) {
-            setLoading(true);
             const fetchSummary = async () => {
-                const result = await getMatchSummary({
-                    matchId: match._id,
-                });
-                
-                if (result.error) {
-                    setSummary(result.error);
-                } else {
-                    setSummary(result.summary!);
+                setLoading(true);
+                setError(null);
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/summary/${match._id}`);
+                    setSummary(response.data.summary);
+                } catch (err) {
+                    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+                    setError(`Failed to load AI summary: ${errorMessage}`);
+                    console.error(err);
+                } finally {
+                    setLoading(false);
                 }
-                setLoading(false);
             };
             fetchSummary();
         }
@@ -151,6 +155,7 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
                                 <Skeleton className="h-4 w-3/4" />
                             </div>
                         }
+                        {error && <p className="text-destructive">{error}</p>}
                         {summary && !loading && <p className='leading-relaxed'>{summary}</p>}
                     </AlertDescription>
                 </Alert>

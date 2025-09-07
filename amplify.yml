@@ -14,7 +14,6 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-      - .next/cache/**/*
 env:
   variables:
     NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
