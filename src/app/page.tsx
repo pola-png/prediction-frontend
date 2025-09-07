@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { AppSidebar } from '@/components/app-sidebar';
 import { MatchCard } from '@/components/match-card';
-import { getUpcomingMatches } from '@/services/sports-data-service';
+import { getUpcomingMatches, getRecentResults } from '@/services/sports-data-service';
 import { getMatchesForBucket } from '@/services/predictions-service';
 
 
@@ -61,7 +61,8 @@ async function getBucketCounts() {
 
 
 export default async function HomePage() {
-  const upcomingMatches = await getUpcomingMatches(15);
+  const upcomingMatches = await getUpcomingMatches(5);
+  const recentResults = await getRecentResults(5);
   const bucketCounts = await getBucketCounts();
 
   return (
@@ -96,7 +97,7 @@ export default async function HomePage() {
             ))}
           </div>
           
-          <div className="grid gap-4 md:gap-8">
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
             <Card>
               <CardHeader className='flex flex-row items-center'>
                 <div className='grid gap-2'>
@@ -111,7 +112,26 @@ export default async function HomePage() {
                 </Button>
               </CardHeader>
               <CardContent className='space-y-4'>
-                {upcomingMatches.slice(0, 15).map((match) => (
+                {upcomingMatches.slice(0, 5).map((match) => (
+                   <MatchCard key={match._id} match={match} />
+                ))}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className='flex flex-row items-center'>
+                <div className='grid gap-2'>
+                  <CardTitle>Recent Results</CardTitle>
+                  <CardDescription>Check the latest match outcomes.</CardDescription>
+                </div>
+                <Button asChild size="sm" className="ml-auto gap-1">
+                  <Link href="/results">
+                    View All
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                {recentResults.map((match) => (
                    <MatchCard key={match._id} match={match} />
                 ))}
               </CardContent>

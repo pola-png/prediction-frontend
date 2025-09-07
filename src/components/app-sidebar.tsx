@@ -20,7 +20,6 @@ const menuItems = [
   { href: '/predictions/2odds', label: '2 Odds', icon: Rocket },
   { href: '/predictions/5odds', label: '5 Odds', icon: BarChart },
   { href: '/predictions/big10', label: 'Big 10+', icon: Trophy },
-  { href: '/results', label: 'Results', icon: ListChecks },
 ];
 
 export function AppSidebar() {
