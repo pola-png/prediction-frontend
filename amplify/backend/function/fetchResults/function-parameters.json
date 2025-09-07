@@ -1,0 +1,18 @@
+
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "mongoUri",
+      "environmentVariableName": "MONGO_URI"
+    },
+    {
+      "cloudFormationParameterName": "soccersApiUser",
+      "environmentVariableName": "SOCCERS_API_USER"
+    },
+    {
+      "cloudFormationParameterName": "soccersApiToken",
+      "environmentVariableName": "SOCCERS_API_TOKEN"
+    }
+  ]
+}

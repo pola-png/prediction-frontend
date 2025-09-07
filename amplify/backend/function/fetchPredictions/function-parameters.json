@@ -1,0 +1,14 @@
+
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "mongoUri",
+      "environmentVariableName": "MONGO_URI"
+    },
+    {
+      "cloudFormationParameterName": "geminiApiKey",
+      "environmentVariableName": "GEMINI_API_KEY"
+    }
+  ]
+}

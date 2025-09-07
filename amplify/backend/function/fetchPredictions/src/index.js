@@ -15,7 +15,6 @@ Parameters will be of the form { Name: 'secretName', Value: 'secretValue', ... }
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const mongoose = require("mongoose");
 const { z } = require("zod");
-const aws = require('aws-sdk');
 
 const { Schema } = mongoose;
 
@@ -80,9 +79,9 @@ const GenerateMatchPredictionsOutputSchema = z.object({
 
 // --- Database Connection ---
 let conn = null;
-async function dbConnect(mongoUri) {
+async function dbConnect() {
   if (conn == null) {
-    conn = mongoose.connect(mongoUri, {
+    conn = mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
       bufferCommands: false,
     }).then(() => mongoose);
@@ -91,21 +90,6 @@ async function dbConnect(mongoUri) {
   return conn;
 }
 
-// --- Helper Functions ---
-async function getSecrets() {
-    const ssm = new aws.SSM();
-    const { Parameters } = await ssm.getParameters({
-        Names: ["GEMINI_API_KEY", "MONGO_URI"].map(secretName => process.env[secretName]),
-        WithDecryption: true,
-    }).promise();
-
-    const secrets = {};
-    for (const param of Parameters) {
-        const secretName = param.Name.split('/').pop();
-        secrets[secretName] = param.Value;
-    }
-    return secrets;
-}
 
 async function callGenerativeAI(genAI, prompt) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-preview" });
@@ -118,17 +102,15 @@ async function callGenerativeAI(genAI, prompt) {
 }
 
 exports.handler = async (event) => {
-  try {
-    const secrets = await getSecrets();
-    const { GEMINI_API_KEY, MONGO_URI } = secrets;
+  try-    const { GEMINI_API_KEY, MONGO_URI } = process.env;
 
     if (!GEMINI_API_KEY || !MONGO_URI) {
-        throw new Error("Required secrets (GEMINI_API_KEY, MONGO_URI) not found in SSM Parameter Store.");
+        throw new Error("Required environment variables (GEMINI_API_KEY, MONGO_URI) are not set.");
     }
     
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-    await dbConnect(MONGO_URI);
+    await dbConnect();
     console.log("DB connected");
 
     const Team = mongoose.models.Team || mongoose.model("Team", TeamSchema);

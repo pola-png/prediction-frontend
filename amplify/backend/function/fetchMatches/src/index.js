@@ -14,7 +14,6 @@ Parameters will be of the form { Name: 'secretName', Value: 'secretValue', ... }
 */
 const axios = require("axios");
 const mongoose = require("mongoose");
-const aws = require('aws-sdk');
 
 const { Schema } = mongoose;
 
@@ -44,9 +43,9 @@ const MatchSchema = new Schema({
 
 // --- Database Connection ---
 let conn = null;
-async function dbConnect(mongoUri) {
+async function dbConnect() {
   if (conn == null) {
-    conn = mongoose.connect(mongoUri, {
+    conn = mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
       bufferCommands: false,
     }).then(() => mongoose);
@@ -56,22 +55,6 @@ async function dbConnect(mongoUri) {
 }
 
 // --- Helper Functions ---
-async function getSecrets() {
-    const ssm = new aws.SSM();
-    const { Parameters } = await ssm.getParameters({
-        Names: ["SOCCERS_API_USER", "SOCCERS_API_TOKEN", "MONGO_URI"].map(secretName => process.env[secretName]),
-        WithDecryption: true,
-    }).promise();
-
-    const secrets = {};
-    for (const param of Parameters) {
-        // The Name is the full path, so we extract the base name.
-        const secretName = param.Name.split('/').pop();
-        secrets[secretName] = param.Value;
-    }
-    return secrets;
-}
-
 async function getOrCreateTeam(TeamModel, name) {
     let team = await TeamModel.findOne({ name });
     if (!team) {
@@ -83,14 +66,13 @@ async function getOrCreateTeam(TeamModel, name) {
 
 exports.handler = async (event) => {
   try {
-    const secrets = await getSecrets();
-    const { SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI } = secrets;
+    const { SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI } = process.env;
 
     if (!SOCCERS_API_USER || !SOCCERS_API_TOKEN || !MONGO_URI) {
-        throw new Error("Required secrets (SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI) not found in SSM Parameter Store.");
+        throw new Error("Required environment variables (SOCCERS_API_USER, SOCCERS_API_TOKEN, MONGO_URI) are not set.");
     }
 
-    await dbConnect(MONGO_URI);
+    await dbConnect();
     console.log("DB connected");
 
     const Team = mongoose.models.Team || mongoose.model("Team", TeamSchema);
