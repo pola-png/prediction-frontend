@@ -55,15 +55,6 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
             const fetchSummary = async () => {
                 const result = await getMatchSummary({
                     matchId: match._id,
-                    homeTeamName: match.homeTeam.name,
-                    awayTeamName: match.awayTeam.name,
-                    prediction: {
-                        oneXTwo: match.prediction!.outcomes.oneXTwo,
-                        over15: match.prediction!.outcomes.over15,
-                        over25: match.prediction!.outcomes.over25,
-                        bttsYes: match.prediction!.outcomes.bttsYes,
-                    },
-                    features: match.prediction!.features,
                 });
                 
                 if (result.error) {

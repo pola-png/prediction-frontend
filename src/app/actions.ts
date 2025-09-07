@@ -1,15 +1,20 @@
 
 'use server';
 
-import type { SummarizeMatchInsightsInput } from "@/ai/flows/summarize-match-insights";
+// This file is now largely obsolete as the primary logic has moved to Lambda functions.
+// The getMatchSummary function might be re-purposed later to call a Lambda
+// or an AppSync resolver that invokes the AI summarization flow.
 
-// This function needs to be updated to work with the new AI flow structure
-// and data fetching from DynamoDB via an API Gateway.
+// For now, we return a static message.
+
+interface SummarizeMatchInsightsInput {
+    matchId: string;
+    // other fields...
+}
+
 export async function getMatchSummary(input: SummarizeMatchInsightsInput) {
   try {
-    // const result = await summarizeMatchInsights(input);
-    // return { summary: result.summary };
-    return { summary: "AI summary is currently disabled pending backend migration." };
+    return { summary: "AI summary is currently handled by a backend Lambda function and is not available via this endpoint." };
   } catch (error) {
     console.error("Failed to fetch match summary", error);
     return { error: "Could not load AI summary for this match." };

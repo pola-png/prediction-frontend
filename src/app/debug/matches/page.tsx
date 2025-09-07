@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -8,19 +11,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getAllMatches } from "@/services/sports-data-service";
 import type { Match } from "@/lib/types";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function DebugMatchesPage() {
-  const allMatches = await getAllMatches();
+export default function DebugMatchesPage() {
+  const [allMatches, setAllMatches] = React.useState<Match[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // In a real app, this would fetch from the API Gateway endpoint
+    // that's connected to the DynamoDB table.
+    // e.g., fetch('/api/matches').then(res => res.json()).then(data => setAllMatches(data));
+    setTimeout(() => {
+        setAllMatches([]);
+        setLoading(false);
+    }, 1000);
+  }, []);
+
+
+  if (loading) {
+    return (
+        <div className="container mx-auto py-10">
+             <h1 className="text-3xl font-bold mb-4">Match Debug View</h1>
+             <div className="space-y-4 mt-8">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+             </div>
+        </div>
+    )
+  }
 
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-4">Match Debug View</h1>
       <p className="text-muted-foreground mb-8">
-        This page displays all matches currently in the database (limit 200, sorted by most recent).
+        This page should display all matches currently in the DynamoDB table (via an API Gateway).
       </p>
       <Table>
         <TableCaption>A list of all matches from the database.</TableCaption>
@@ -31,7 +60,6 @@ export default async function DebugMatchesPage() {
             <TableHead>Home Team</TableHead>
             <TableHead>Away Team</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Source</TableHead>
             <TableHead>Has Prediction</TableHead>
           </TableRow>
         </TableHeader>
@@ -47,7 +75,6 @@ export default async function DebugMatchesPage() {
                     {match.status}
                   </Badge>
               </TableCell>
-              <TableCell>{match.source}</TableCell>
                <TableCell>
                 {match.prediction ? (
                     <Badge variant="default">Yes</Badge>
@@ -57,6 +84,13 @@ export default async function DebugMatchesPage() {
               </TableCell>
             </TableRow>
           ))}
+           {allMatches.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        No matches found. The API might not be connected or the table is empty.
+                    </TableCell>
+                </TableRow>
+           )}
         </TableBody>
       </Table>
     </div>
