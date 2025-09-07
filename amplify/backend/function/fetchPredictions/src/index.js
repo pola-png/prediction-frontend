@@ -73,7 +73,7 @@ const GenerateMatchPredictionsOutputSchema = z.object({
   over25: z.number(),
   bttsYes: z.number(),
   bttsNo: z.number(),
-  confidence: z.number().min(50).max(100),
+  confidence: z.number().min(0).max(100),
   bucket: z.enum(['vip', '2odds', '5odds', 'big10']),
 });
 
@@ -102,7 +102,8 @@ async function callGenerativeAI(genAI, prompt) {
 }
 
 exports.handler = async (event) => {
-  try-    const { GEMINI_API_KEY, MONGO_URI } = process.env;
+  try {
+    const { GEMINI_API_KEY, MONGO_URI } = process.env;
 
     if (!GEMINI_API_KEY || !MONGO_URI) {
         throw new Error("Required environment variables (GEMINI_API_KEY, MONGO_URI) are not set.");
@@ -120,7 +121,7 @@ exports.handler = async (event) => {
 
     // 1. Find matches needing predictions
     const upcomingMatches = await Match.find({
-        status: { $in: ['scheduled', 'upcoming'] }, // SoccersAPI uses 'upcoming'
+        status: { $in: ['scheduled', 'upcoming', 'tba'] },
         matchDateUtc: { $gte: new Date() },
         prediction: { $exists: false }
     }).populate('homeTeam').populate('awayTeam').lean();
@@ -160,10 +161,11 @@ Based on this, provide probabilities (0-1) for:
 - Double Chance (home/draw, home/away, draw/away)
 - Over/Under 0.5, 1.5, 2.5 goals
 - Both Teams to Score (BTTS) Yes/No
-- A confidence score (50-100)
+- A confidence score (0-100)
 - A prediction bucket ('vip', '2odds', '5odds', 'big10')
 
 Your response MUST be a valid JSON object that conforms to the Zod schema provided in the system instructions.
+Do not wrap the JSON in markdown backticks.
 `;
             const predictionResult = await callGenerativeAI(genAI, prompt);
             
