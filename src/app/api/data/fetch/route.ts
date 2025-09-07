@@ -2,7 +2,9 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { fetchFromSoccersApi } from '@/services/soccersapi-service';
-import { updateOrCreateMatch, getTeam } from '@/scripts/fetch-data';
+import MatchModel from '@/models/Match';
+import TeamModel from '@/models/Team';
+import type { Match, Team } from '@/lib/types';
 import fetch from 'node-fetch';
 
 
@@ -40,6 +42,42 @@ function slugify(text: string): string {
         .replace(/\-\-+/g, '-')     // Replace multiple - with single -
         .replace(/^-+/, '')          // Trim - from start of text
         .replace(/-+$/, '');         // Trim - from end of text
+}
+
+const teamCache = new Map<string, any>();
+async function getTeam(teamName: string): Promise<any> {
+    const slug = slugify(teamName);
+    if (teamCache.has(slug)) {
+        return teamCache.get(slug);
+    }
+    let team = await TeamModel.findOne({ slug: slug });
+    if (!team) {
+        team = new TeamModel({
+            name: teamName,
+            slug: slug,
+            logoUrl: `https://picsum.photos/seed/${slug}/40/40`,
+        });
+        await team.save();
+        console.log(`Created team: ${teamName}`);
+    }
+    teamCache.set(slug, team);
+    return team;
+}
+
+export async function updateOrCreateMatch(matchData: Partial<Match>) {
+    const homeTeam = await getTeam(matchData.homeTeam!.name);
+    const awayTeam = await getTeam(matchData.awayTeam!.name);
+
+    const filter = { source: matchData.source, externalId: matchData.externalId };
+    const update = {
+        ...matchData,
+        homeTeam: homeTeam._id,
+        awayTeam: awayTeam._id,
+        status: matchData.status || 'finished',
+        lastUpdatedAt: new Date(),
+    };
+
+    await MatchModel.findOneAndUpdate(filter, update, { upsert: true, new: true, setDefaultsOnInsert: true });
 }
 
 

@@ -14,10 +14,3 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-backend:
-  phases:
-    build:
-      commands:
-        - npm ci
-        - npm run build
-        - node server.js
