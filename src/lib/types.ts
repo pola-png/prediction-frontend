@@ -45,8 +45,6 @@ export interface Prediction {
     over25: number;
     bttsYes: number;
     bttsNo: number;
-    correctScoreRange: string;
-    halfTimeDraw: number;
   };
   confidence: number;
   bucket: '2odds' | '5odds' | 'vip' | 'big10';
@@ -140,8 +138,6 @@ export const GenerateMatchPredictionsOutputSchema = z.object({
   over25: z.number().describe('Probability of over 2.5 goals (0-1).'),
   bttsYes: z.number().describe('Probability of both teams to score (0-1).'),
   bttsNo: z.number().describe('Probability of at least one team not scoring (0-1).'),
-  correctScoreRange: z.string().describe('Most likely correct score range.'),
-  halfTimeDraw: z.number().describe('Probability of the match being a draw at half-time (0-1).'),
   confidence: z.number().describe('Confidence level of the prediction (50-100).'),
   bucket: z.enum(['vip', '2odds', '5odds', 'big10']).describe('The prediction bucket (vip, 2odds, 5odds, big10).'),
 });
@@ -178,7 +174,6 @@ export const SummarizeMatchInsightsInputSchema = z.object({
     over15: z.number().describe('Probability for over 1.5 goals.'),
     over25: z.number().describe('Probability for over 2.5 goals.'),
     bttsYes: z.number().describe('Probability for both teams to score.'),
-    correctScoreRange: z.string().describe('The most likely correct score range.'),
   }).describe('The prediction for the match.'),
   features: z.object({
     teamFormWeight: z.number(),

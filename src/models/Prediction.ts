@@ -20,8 +20,6 @@ export interface IPrediction extends Document {
     over25: number;
     bttsYes: number;
     bttsNo: number;
-    correctScoreRange: string;
-    halfTimeDraw: number;
   };
   confidence: number;
   bucket: '2odds' | '5odds' | 'vip' | 'big10';
@@ -55,8 +53,6 @@ const PredictionSchema = new Schema<IPrediction>({
     over25: { type: Number, required: true },
     bttsYes: { type: Number, required: true },
     bttsNo: { type: Number, required: true },
-    correctScoreRange: { type: String, required: true },
-    halfTimeDraw: { type: Number, required: true },
   },
   confidence: { type: Number, required: true },
   bucket: { type: String, enum: ['2odds', '5odds', 'vip', 'big10'], required: true },

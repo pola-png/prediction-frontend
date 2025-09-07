@@ -62,7 +62,6 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
                         over15: match.prediction!.outcomes.over15,
                         over25: match.prediction!.outcomes.over25,
                         bttsYes: match.prediction!.outcomes.bttsYes,
-                        correctScoreRange: match.prediction!.outcomes.correctScoreRange,
                     },
                     features: match.prediction!.features,
                 });
@@ -82,7 +81,7 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
         return <>{children}</>;
     }
   
-    const { oneXTwo, doubleChance, over05, over15, over25, bttsYes, bttsNo, halfTimeDraw, correctScoreRange } = match.prediction.outcomes;
+    const { oneXTwo, doubleChance, over05, over15, over25, bttsYes, bttsNo } = match.prediction.outcomes;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -140,23 +139,11 @@ export function PredictionDetailsDialog({ match, children }: PredictionDetailsDi
                   <>
                     <div className="space-y-3">
                         <ProbabilityBar label="Double Chance (Home/Draw)" value={doubleChance.homeOrDraw} />
+                        <ProbabilityBar label="Double Chance (Home/Away)" value={doubleChance.homeOrAway} />
                         <ProbabilityBar label="Double Chance (Away/Draw)" value={doubleChance.drawOrAway} />
                     </div>
-                    <Separator />
                   </>
                 )}
-                 {typeof halfTimeDraw === 'number' && (
-                   <>
-                    <div className="space-y-3">
-                        <ProbabilityBar label="Draw at Half Time" value={halfTimeDraw} />
-                    </div>
-                    <Separator />
-                   </>
-                 )}
-                 <div className="pt-2 text-center">
-                    <div className="text-sm text-muted-foreground">Correct Score Range</div>
-                    <div className="font-semibold text-lg">{correctScoreRange}</div>
-                 </div>
               </div>
             </div>
 

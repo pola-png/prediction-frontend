@@ -33,7 +33,6 @@ const prompt = ai.definePrompt({
   - Over 1.5 Goals: {{prediction.over15}}
   - Over 2.5 Goals: {{prediction.over25}}
   - Both Teams to Score: {{prediction.bttsYes}}
-  - Most Likely Correct Score Range: {{prediction.correctScoreRange}}
 
   Feature Weights:
   - Team Form Weight: {{features.teamFormWeight}}
