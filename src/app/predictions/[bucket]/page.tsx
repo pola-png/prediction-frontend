@@ -1,9 +1,13 @@
+
+'use client';
+
+import * as React from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import type { Match } from '@/lib/types';
 import { PredictionCard } from '@/components/prediction-card';
-import { getMatchesForBucket, calculateAccumulatorOdds } from '@/services/predictions-service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const bucketDetails: Record<string, { title: string, description: string }> = {
@@ -14,16 +18,30 @@ const bucketDetails: Record<string, { title: string, description: string }> = {
 }
 
 
-export default async function BucketPage({ params }: { params: { bucket: string } }) {
+const ListSkeleton = () => (
+  <div className='space-y-4'>
+    <Skeleton className="h-48 w-full" />
+    <Skeleton className="h-48 w-full" />
+  </div>
+);
+
+
+export default function BucketPage({ params }: { params: { bucket: string } }) {
   const { bucket } = params;
   const details = bucketDetails[bucket] || { title: 'Predictions', description: 'Browse predictions by category.' };
   
-  const filteredMatches = await getMatchesForBucket(bucket);
-  
-  const accumulators = filteredMatches.length > 0 ? [filteredMatches] : [];
+  const [matches, setMatches] = React.useState<Match[][]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const oddsPromises = accumulators.map(acc => calculateAccumulatorOdds(acc.map(m => m._id)));
-  const oddsResults = await Promise.all(oddsPromises);
+  React.useEffect(() => {
+    // Simulate fetching data
+    setTimeout(() => {
+        // TODO: Replace with actual API call to get predictions for this bucket
+        setMatches([]);
+        setLoading(false);
+    }, 1000);
+  }, [bucket]);
+
 
   return (
     <SidebarProvider>
@@ -44,18 +62,22 @@ export default async function BucketPage({ params }: { params: { bucket: string 
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {accumulators.length > 0 ? (
-                    accumulators.map((accumulator, index) => (
-                        <PredictionCard 
-                            key={index} 
-                            matches={accumulator} 
-                            totalOdds={oddsResults[index]}
-                        />
-                    ))
-                ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                        No predictions available in this bucket for the upcoming matches.
-                    </div>
+                {loading ? <ListSkeleton /> : (
+                  <>
+                  {matches.length > 0 ? (
+                      matches.map((accumulator, index) => (
+                          <PredictionCard 
+                              key={index} 
+                              matches={accumulator} 
+                              totalOdds={"1.00"} // Placeholder
+                          />
+                      ))
+                  ) : (
+                      <div className="text-center text-muted-foreground py-8">
+                          No predictions available in this bucket for the upcoming matches.
+                      </div>
+                  )}
+                  </>
                 )}
               </CardContent>
             </Card>

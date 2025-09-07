@@ -1,4 +1,6 @@
 
+'use client';
+
 import * as React from 'react';
 import {
   SidebarProvider,
@@ -16,8 +18,6 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { AppSidebar } from '@/components/app-sidebar';
 import { MatchCard } from '@/components/match-card';
-import { getUpcomingMatches, getRecentResults } from '@/services/sports-data-service';
-import { getMatchesForBucket } from '@/services/predictions-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Match } from '@/lib/types';
 
@@ -53,48 +53,9 @@ const predictionBuckets = [
   },
 ];
 
-async function getBucketCounts() {
-  const buckets = ['vip', '2odds', '5odds', 'big10'];
-  const allMatchesInBuckets = await getMatchesForBucket(buckets, 1000);
-  
-  const counts = allMatchesInBuckets.reduce((acc, match) => {
-    if (match.prediction?.bucket) {
-      acc[match.prediction.bucket] = (acc[match.prediction.bucket] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
-
-  // Ensure all buckets have a count, even if it's 0
-  buckets.forEach(bucket => {
-    if (!counts[bucket]) {
-      counts[bucket] = 0;
-    }
-  });
-
-  return counts;
-}
-
-async function UpcomingMatchesList() {
-  const upcomingMatches = await getUpcomingMatches(5);
-  return (
-    <div className='space-y-4'>
-      {upcomingMatches.slice(0, 5).map((match) => (
-        <MatchCard key={match._id} match={match} />
-      ))}
-    </div>
-  );
-}
-
-async function RecentResultsList() {
-  const recentResults = await getRecentResults(5);
-  return (
-    <div className='space-y-4'>
-      {recentResults.map((match) => (
-        <MatchCard key={match._id} match={match} />
-      ))}
-    </div>
-  );
-}
+// This is a placeholder. In a real app, you would fetch this from your API.
+const placeholderMatches: Match[] = []; 
+const placeholderResults: Match[] = [];
 
 const ListSkeleton = () => (
   <div className='space-y-4'>
@@ -105,8 +66,23 @@ const ListSkeleton = () => (
 );
 
 
-export default async function HomePage() {
-  const bucketCounts = await getBucketCounts();
+export default function HomePage() {
+  // In a real app, you'd use React.useEffect and useState to fetch data
+  // from an API endpoint that reads from your DynamoDB table.
+  const [upcomingMatches, setUpcomingMatches] = React.useState<Match[]>([]);
+  const [recentResults, setRecentResults] = React.useState<Match[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // Simulate fetching data
+    setTimeout(() => {
+        // TODO: Replace with actual API call
+        setUpcomingMatches(placeholderMatches);
+        setRecentResults(placeholderResults);
+        setLoading(false);
+    }, 1000);
+  }, []);
+
 
   return (
     <SidebarProvider>
@@ -130,7 +106,7 @@ export default async function HomePage() {
                   <bucket.icon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{bucketCounts[bucket.bucket as keyof typeof bucketCounts] ?? 0} Active</div>
+                  <div className="text-2xl font-bold">0 Active</div>
                   <p className="text-xs text-muted-foreground">
                     {bucket.description}
                   </p>
@@ -155,9 +131,15 @@ export default async function HomePage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <React.Suspense fallback={<ListSkeleton />}>
-                  <UpcomingMatchesList />
-                </React.Suspense>
+                {loading ? <ListSkeleton /> : (
+                  <div className='space-y-4'>
+                    {upcomingMatches.length > 0 ? (
+                      upcomingMatches.map((match) => <MatchCard key={match._id} match={match} />)
+                    ) : (
+                      <p className="text-muted-foreground text-center">No upcoming matches.</p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -174,9 +156,15 @@ export default async function HomePage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                 <React.Suspense fallback={<ListSkeleton />}>
-                  <RecentResultsList />
-                </React.Suspense>
+                 {loading ? <ListSkeleton /> : (
+                  <div className='space-y-4'>
+                    {recentResults.length > 0 ? (
+                      recentResults.map((match) => <MatchCard key={match._id} match={match} />)
+                    ) : (
+                      <p className="text-muted-foreground text-center">No recent results.</p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

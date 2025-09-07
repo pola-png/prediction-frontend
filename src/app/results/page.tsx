@@ -1,14 +1,38 @@
 
+'use client';
+
+import * as React from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { MatchCard } from '@/components/match-card';
 import type { Match } from '@/lib/types';
-import { getRecentResults } from '@/services/sports-data-service';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const ListSkeleton = () => (
+  <div className='space-y-4'>
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+  </div>
+);
 
 
-export default async function ResultsPage() {
-  const recentMatches = await getRecentResults(20);
+export default function ResultsPage() {
+  const [recentMatches, setRecentMatches] = React.useState<Match[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+   React.useEffect(() => {
+    // Simulate fetching data
+    setTimeout(() => {
+        // TODO: Replace with actual API call
+        setRecentMatches([]);
+        setLoading(false);
+    }, 1000);
+  }, []);
+
 
   return (
     <SidebarProvider>
@@ -29,14 +53,18 @@ export default async function ResultsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentMatches.length > 0 ? (
-                    recentMatches.map((match: Match) => (
-                        <MatchCard key={match._id} match={match} />
-                    ))
-                ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                        No recent results available.
-                    </div>
+                {loading ? <ListSkeleton /> : (
+                  <>
+                    {recentMatches.length > 0 ? (
+                        recentMatches.map((match: Match) => (
+                            <MatchCard key={match._id} match={match} />
+                        ))
+                    ) : (
+                        <div className="text-center text-muted-foreground py-8">
+                            No recent results available.
+                        </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
