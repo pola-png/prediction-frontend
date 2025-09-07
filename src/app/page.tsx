@@ -1,3 +1,5 @@
+
+import * as React from 'react';
 import {
   SidebarProvider,
   SidebarInset,
@@ -16,6 +18,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { MatchCard } from '@/components/match-card';
 import { getUpcomingMatches, getRecentResults } from '@/services/sports-data-service';
 import { getMatchesForBucket } from '@/services/predictions-service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const predictionBuckets = [
@@ -59,10 +62,38 @@ async function getBucketCounts() {
   return counts;
 }
 
+async function UpcomingMatchesList() {
+  const upcomingMatches = await getUpcomingMatches(5);
+  return (
+    <div className='space-y-4'>
+      {upcomingMatches.slice(0, 5).map((match) => (
+        <MatchCard key={match._id} match={match} />
+      ))}
+    </div>
+  );
+}
+
+async function RecentResultsList() {
+  const recentResults = await getRecentResults(5);
+  return (
+    <div className='space-y-4'>
+      {recentResults.map((match) => (
+        <MatchCard key={match._id} match={match} />
+      ))}
+    </div>
+  );
+}
+
+const ListSkeleton = () => (
+  <div className='space-y-4'>
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-24 w-full" />
+  </div>
+);
+
 
 export default async function HomePage() {
-  const upcomingMatches = await getUpcomingMatches(5);
-  const recentResults = await getRecentResults(5);
   const bucketCounts = await getBucketCounts();
 
   return (
@@ -111,10 +142,10 @@ export default async function HomePage() {
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                {upcomingMatches.slice(0, 5).map((match) => (
-                   <MatchCard key={match._id} match={match} />
-                ))}
+              <CardContent>
+                <React.Suspense fallback={<ListSkeleton />}>
+                  <UpcomingMatchesList />
+                </React.Suspense>
               </CardContent>
             </Card>
             <Card>
@@ -130,10 +161,10 @@ export default async function HomePage() {
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                {recentResults.map((match) => (
-                   <MatchCard key={match._id} match={match} />
-                ))}
+              <CardContent>
+                 <React.Suspense fallback={<ListSkeleton />}>
+                  <RecentResultsList />
+                </React.Suspense>
               </CardContent>
             </Card>
           </div>
