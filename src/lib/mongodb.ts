@@ -16,6 +16,12 @@ if (!MONGODB_URI) {
   );
 }
 
+if (MONGODB_URI === 'YOUR_MONGODB_CONNECTION_STRING_HERE') {
+    throw new Error(
+        'The MONGO_URI is still set to the placeholder value. Please replace it with your actual connection string in .env.local'
+    );
+}
+
 let cached = global.mongoose;
 
 if (!cached) {
@@ -41,3 +47,4 @@ async function dbConnect() {
 }
 
 export default dbConnect;
+
