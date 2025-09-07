@@ -15,3 +15,10 @@ frontend:
     paths:
       - node_modules/**/*
       - .next/cache/**/*
+backend:
+  phases:
+    build:
+      commands:
+        - npm ci
+        - npm run build
+        - node server.js
