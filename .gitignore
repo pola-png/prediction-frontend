@@ -1,42 +1,8 @@
-# Ignore all frontend files and directories, making this a backend-only repo.
+# Ignore everything in the root directory
+/*
 
-# Node modules
-/node_modules
-/backend/node_modules
+# But un-ignore the backend directory
+!/backend
 
-# Next.js build artifacts
-.next/
-out/
-
-# Frontend source & public assets
-/public/
-/src/
-
-# Frontend config files
-/amplify.yml
-/amplify/
-/next.config.js
-/next.config.mjs
-/next.config.ts
-/postcss.config.mjs
-/tailwind.config.ts
-/tsconfig.json
-/middleware.ts
-
-# Root package files
-/package.json
-/package-lock.json
-/pnpm-lock.yaml
-/yarn.lock
-
-# Environment files
-.env
-.env.development
-.env.local
-.env.production
-.env.test
-
-# Other misc files
-/README.md
-/server.js
-/types/
+# And keep this .gitignore file
+!/.gitignore
