@@ -10,6 +10,6 @@ router.get('/results', dataController.getRecentResults);
 router.get('/summary/:matchId', dataController.getMatchSummary);
 
 // --- Cron Job Triggers ---
-router.get('/cron/trigger-all', dataController.runAllCronJobs);
+// This route has been moved to index.js for explicit handling.
 
 module.exports = router;

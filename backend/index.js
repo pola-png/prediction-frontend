@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const apiRoutes = require('./routes/api');
+const { runAllCronJobs } = require('./controllers/dataController');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,11 @@ mongoose.connect(MONGO_URI)
 
 // --- API Routes ---
 app.use('/api', apiRoutes);
+
+// --- Cron Job Trigger Route ---
+// This route is explicitly defined here to ensure it's always available for cron services.
+app.get('/api/cron/trigger-all', runAllCronJobs);
+
 
 // --- Root Endpoint for Health Checks ---
 app.get('/', (req, res) => {
