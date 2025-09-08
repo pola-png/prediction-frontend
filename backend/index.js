@@ -25,13 +25,12 @@ mongoose.connect(MONGO_URI)
     process.exit(1);
   });
 
-// --- API Routes ---
-app.use('/api', apiRoutes);
-
 // --- Cron Job Trigger Route ---
-// This route is explicitly defined here to ensure it's always available for cron services.
+// This must be defined BEFORE the general '/api' router to avoid being overridden.
 app.get('/api/cron/trigger-all', runAllCronJobs);
 
+// --- API Routes ---
+app.use('/api', apiRoutes);
 
 // --- Root Endpoint for Health Checks ---
 app.get('/', (req, res) => {
