@@ -1,8 +1,31 @@
-# Ignore everything in the root directory
+# Frontend files
+/amplify/
+/node_modules/
+/public/
+/src/
+/.env.local
+/.eslintrc.json
+/.next/
+/amplify.yml
+/components.json
+/next.config.js
+/next.config.mjs
+/next.config.ts
+/next-env.d.ts
+/package-lock.json
+/postcss.config.js
+/README.md
+/server.js
+/tailwind.config.ts
+/tsconfig.json
+
+# Ignore everything in the root except for the essential backend files and this gitignore
 /*
-
-# But un-ignore the backend directory
-!/backend
-
-# And keep this .gitignore file
 !/.gitignore
+!/package.json
+!/index.js
+!/controllers/
+!/models/
+!/routes/
+!/services/
+!/README.md
