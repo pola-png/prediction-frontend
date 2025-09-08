@@ -105,9 +105,9 @@ exports.getMatchSummary = async (req, res) => {
 // --- CRON JOB CONTROLLERS ---
 
 const checkCronToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if (authHeader !== `Bearer ${process.env.CRON_TOKEN}`) {
-        return res.status(401).json({ error: 'Unauthorized' });
+    const token = req.query.token;
+    if (!token || token !== process.env.CRON_TOKEN) {
+        return res.status(403).json({ error: 'Unauthorized' });
     }
     next();
 };
@@ -142,7 +142,8 @@ exports.runFetchResults = [checkCronToken, async (req, res) => {
         const result = await fetchAndStoreResults();
         console.log(`CRON: Results fetching complete. Updated: ${result.updatedCount}`);
         res.status(200).json({ success: true, ...result });
-    } catch (error) {
+    } catch (error)
+ {
         console.error("CRON 'fetch-results' failed:", error);
         res.status(500).json({ success: false, error: error.message });
     }
