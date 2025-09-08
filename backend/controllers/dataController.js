@@ -11,7 +11,7 @@ const { getSummaryFromAI } = require('../services/aiService');
 exports.getDashboardData = async (req, res) => {
     try {
         const upcomingMatches = await Match.find({
-            status: 'scheduled',
+            status: { $in: ['scheduled', 'upcoming', 'tba'] },
             prediction: { $exists: true }
         })
         .sort({ matchDateUtc: 1 })
@@ -28,17 +28,13 @@ exports.getDashboardData = async (req, res) => {
         const buckets = ['vip', '2odds', '5odds', 'big10'];
         const bucketCounts = {};
         for (const bucket of buckets) {
-            const count = await Match.countDocuments({
-                status: 'scheduled',
-                prediction: { $exists: true },
-                'prediction.bucket': bucket
-            }).populate('prediction');
-            const matches = await Match.find({ status: 'scheduled' })
+            const matches = await Match.find({ status: { $in: ['scheduled', 'upcoming', 'tba'] } })
                 .populate({
                     path: 'prediction',
                     match: { bucket: bucket }
                 });
-            bucketCounts[bucket] = matches.filter(m => m.prediction).length;
+            const filteredMatches = matches.filter(m => m.prediction);
+            bucketCounts[bucket] = filteredMatches.length;
         }
 
         res.json({ upcomingMatches, recentResults, bucketCounts });
@@ -51,7 +47,7 @@ exports.getDashboardData = async (req, res) => {
 exports.getPredictionsByBucket = async (req, res) => {
     try {
         const { bucket } = req.params;
-        const matches = await Match.find({ status: 'scheduled' })
+        const matches = await Match.find({ status: { $in: ['scheduled', 'upcoming', 'tba'] } })
             .populate({
                 path: 'prediction',
                 match: { bucket }
@@ -106,39 +102,48 @@ exports.getMatchSummary = async (req, res) => {
 };
 
 
-// --- CRON JOB CONTROLLER ---
+// --- CRON JOB CONTROLLERS ---
 
-exports.runAllCronJobs = async (req, res) => {
+const checkCronToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (authHeader !== `Bearer ${process.env.CRON_TOKEN}`) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+    next();
+};
+
+exports.runFetchMatches = [checkCronToken, async (req, res) => {
     try {
-        console.log('CRON: Starting all jobs...');
-        
         console.log('CRON: Fetching new matches...');
-        const fetchResult = await fetchAndStoreMatches();
-        console.log(`CRON: Fetching complete. New: ${fetchResult.newMatchesCount}, History: ${fetchResult.newHistoryCount}`);
-        
-        console.log('CRON: Generating new predictions...');
-        const predictionResult = await generateAllPredictions();
-        console.log(`CRON: Prediction generation complete. Processed: ${predictionResult.processedCount}`);
-
-        console.log('CRON: Fetching match results...');
-        const resultsResult = await fetchAndStoreResults();
-        console.log(`CRON: Results fetching complete. Updated: ${resultsResult.updatedCount}`);
-
-        console.log('CRON: All jobs finished successfully.');
-        res.status(200).json({
-            success: true,
-            fetchResult,
-            predictionResult,
-            resultsResult
-        });
-
+        const result = await fetchAndStoreMatches();
+        console.log(`CRON: Fetching complete. New: ${result.newMatchesCount}, History: ${result.newHistoryCount}`);
+        res.status(200).json({ success: true, ...result });
     } catch (error) {
-        console.error("A cron job failed:", error);
+        console.error("CRON 'fetch-matches' failed:", error);
         res.status(500).json({ success: false, error: error.message });
     }
-};
+}];
+
+exports.runGeneratePredictions = [checkCronToken, async (req, res) => {
+    try {
+        console.log('CRON: Generating new predictions...');
+        const result = await generateAllPredictions();
+        console.log(`CRON: Prediction generation complete. Processed: ${result.processedCount}`);
+        res.status(200).json({ success: true, ...result });
+    } catch (error) {
+        console.error("CRON 'generate-predictions' failed:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}];
+
+exports.runFetchResults = [checkCronToken, async (req, res) => {
+    try {
+        console.log('CRON: Fetching match results...');
+        const result = await fetchAndStoreResults();
+        console.log(`CRON: Results fetching complete. Updated: ${result.updatedCount}`);
+        res.status(200).json({ success: true, ...result });
+    } catch (error) {
+        console.error("CRON 'fetch-results' failed:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}];

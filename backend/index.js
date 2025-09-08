@@ -4,13 +4,12 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const apiRoutes = require('./routes/api');
-const { runAllCronJobs } = require('./controllers/dataController');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // --- Middleware ---
-app.use(cors()); // Enable CORS for all routes
+app.use(cors());
 app.use(express.json());
 
 // --- Database Connection ---
@@ -24,10 +23,6 @@ mongoose.connect(MONGO_URI)
     console.error('Database connection error:', err);
     process.exit(1);
   });
-
-// --- Cron Job Trigger Route ---
-// This must be defined BEFORE the general '/api' router to avoid being overridden.
-app.get('/api/cron/trigger-all', runAllCronJobs);
 
 // --- API Routes ---
 app.use('/api', apiRoutes);
