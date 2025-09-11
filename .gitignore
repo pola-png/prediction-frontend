@@ -2,20 +2,21 @@
 
 # Dependencies
 /node_modules
+/backend/node_modules
 /.pnp
 .pnp.js
 
 # Testing
 /coverage
 
-# Next.js build output
+# Next.js
 /.next/
 /out/
 
 # Production
 /build
 
-# Other
+# Misc
 .DS_Store
 *.pem
 
@@ -32,9 +33,12 @@ pnpm-debug.log*
 .env.test.local
 .env.production.local
 
-# IDE
+# IDE files
 .vscode/
 .idea/
 
-# Standalone build server.js (we want to commit the root one)
-.next/standalone/server.js
+# Standalone build output
+.next/standalone
+
+# Duplicated backend folder to ignore
+/prediction-backend/
