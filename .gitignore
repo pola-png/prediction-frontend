@@ -1,3 +1,4 @@
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # Dependencies
@@ -5,34 +6,25 @@
 /backend/node_modules
 
 # Next.js build output
-/.next/
-/out/
+/.next
 
-# Production
-/build
+# Dumps
+/dump
+/backend/dump
 
-# Miscellaneous
-.DS_Store
-*.pem
+# Environment variables
+.env
+.env*.local
+/backend/.env
+
+# Logs
+/logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment variables
-.env
-.env*.local
-*.env
-
-# VSCode
-.vscode/
-
-# Amplify
-amplify/\#*
-amplify/.config
-amplify/mock-data
-amplify/backend/amplify-meta.json
-amplify/backend/awscloudformation
-build/
-dist/
+# Other
+.DS_Store
+*.pem
