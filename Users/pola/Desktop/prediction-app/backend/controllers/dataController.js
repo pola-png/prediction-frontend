@@ -1,4 +1,3 @@
-
 const Match = require('../models/Match');
 const Team = require('../models/Team');
 const Prediction = require('../models/Prediction');
