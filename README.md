@@ -6,6 +6,6 @@ This directory contains the Node.js Express backend for the GoalGazer applicatio
 
 This service is designed to be deployed as a standard Node.js Web Service on platforms like Render.
 
-- **Root Directory**: `/src` (The application lives inside the src folder)
+- **Root Directory**: Should be left as the default (the root of your repo).
 - **Build Command**: `npm install`
-- **Start Command**: `node server.js`
+- **Start Command**: `node src/server.js` (or `npm start`)
