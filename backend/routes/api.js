@@ -10,9 +10,10 @@ router.get('/results', dataController.getRecentResults);
 router.get('/summary/:matchId', dataController.getMatchSummary);
 
 // --- Cron Job Triggers ---
-router.get('/cron/fetch-matches', dataController.runFetchMatches);
-router.get('/cron/run-predictions', dataController.runGeneratePredictions);
-router.get('/cron/fetch-results', dataController.runFetchResults);
+// NOTE: Render Cron Jobs use 'Authorization: Bearer <token>' header
+router.post('/cron/fetch-matches', dataController.runFetchMatches);
+router.post('/cron/run-predictions', dataController.runGeneratePredictions);
+router.post('/cron/fetch-results', dataController.runFetchResults);
 
 
 module.exports = router;

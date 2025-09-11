@@ -105,8 +105,10 @@ exports.getMatchSummary = async (req, res) => {
 // --- CRON JOB CONTROLLERS ---
 
 const checkCronToken = (req, res, next) => {
-    const token = req.query.token;
-    if (!token || token !== process.env.CRON_TOKEN) {
+    const token = req.query.token || req.headers['authorization'];
+    const cronToken = `Bearer ${process.env.CRON_TOKEN}`;
+    
+    if (!token || token !== cronToken) {
         return res.status(403).json({ error: 'Unauthorized' });
     }
     next();

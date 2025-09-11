@@ -3,9 +3,9 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { z } = require("zod");
 
 if (!process.env.GEMINI_API_KEY) {
-  throw new Error('Please define the GEMINI_API_KEY environment variable');
+  console.warn('GEMINI_API_KEY environment variable not set. AI features will be disabled.');
 }
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 const GenerateMatchPredictionsOutputSchema = z.object({
   oneXTwo: z.object({ home: z.number(), draw: z.number(), away: z.number() }),
@@ -20,13 +20,29 @@ const GenerateMatchPredictionsOutputSchema = z.object({
 });
 
 async function callGenerativeAI(prompt, outputSchema) {
+    if (!genAI) throw new Error("Generative AI is not initialized. Check GEMINI_API_KEY.");
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-preview" });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    const parsed = JSON.parse(jsonString);
-    return outputSchema.parse(parsed); // Validate with Zod
+    
+    // Adding retry logic
+    for (let i = 0; i < 3; i++) {
+        try {
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            
+            if (!text) {
+                throw new Error("AI returned empty response.");
+            }
+
+            const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
+            const parsed = JSON.parse(jsonString);
+            return outputSchema.parse(parsed); // Validate with Zod
+        } catch(error) {
+            console.error(`AI call attempt ${i+1} failed.`, error.message);
+            if (i === 2) throw error; // Rethrow after last attempt
+            await new Promise(res => setTimeout(res, 1000 * (i + 1))); // wait before retrying
+        }
+    }
 }
 
 async function getPredictionFromAI(match, historicalMatches) {
@@ -61,6 +77,7 @@ Do not wrap the JSON in markdown backticks.
 
 
 async function getSummaryFromAI(match) {
+    if (!genAI) throw new Error("Generative AI is not initialized. Check GEMINI_API_KEY.");
     const prompt = `Provide a concise summary of the key insights and factors influencing the prediction for the match between ${match.homeTeam.name} and ${match.awayTeam.name}.
 
     Focus on the most significant factors that contribute to the predicted outcomes, such as team form, head-to-head statistics, home advantage, and goal-scoring trends. Explain the rationale behind the prediction in a way that is easy to understand.
