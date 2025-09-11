@@ -1,4 +1,3 @@
-
 {
   "name": "prediction-app",
   "version": "1.0.0",
@@ -7,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node server.js"
+    "start": "node .next/standalone/server.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.7.1",
