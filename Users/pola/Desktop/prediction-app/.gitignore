@@ -23,22 +23,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 
 # Local .env file
-.env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
-# IDE
-.idea/
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# Duplicated project directory
+# Duplicate project folder
 /prediction-backend/
+
+# Keep server.js for Render deployment
+!server.js
