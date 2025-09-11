@@ -1,34 +1,27 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # Dependencies
-/node_modules
-/.pnp
-.pnp.js
+node_modules/
+/backend/node_modules/
+/frontend/node_modules/
 
-# Testing
-/coverage
+# Build outputs
+.next/
+/frontend/.next/
+dist/
+build/
 
-# Next.js build output
-/.next/
-/out/
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Production
-/build
+# Local env files
+.env
+.env*.local
+/backend/.env
+/frontend/.env
 
 # Misc
 .DS_Store
 *.pem
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local .env file
-.env.local
-
-# Duplicate project folder
-/prediction-backend/
-
-# Keep server.js for Render deployment
-!server.js
