@@ -14,10 +14,13 @@ app.use(express.json());
 // --- Database Connection ---
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
-  console.error('Please define the MONGO_URI environment variable in your .env file');
-  // process.exit(1); // Commenting out to allow startup for initial checks
+  console.error('Please define the MONGO_URI environment variable');
+  process.exit(1); // Fail fast in production
 } else {
-  mongoose.connect(MONGO_URI)
+  mongoose.connect(MONGO_URI, {
+    bufferCommands: false, // Disable buffering during reconnects
+    serverSelectionTimeoutMS: 5000, // Faster timeout for connection issues
+  })
     .then(() => console.log('Successfully connected to MongoDB.'))
     .catch(err => {
       console.error('Database connection error:', err);
@@ -25,9 +28,9 @@ if (!MONGO_URI) {
     });
 }
 
-
 // --- API Routes ---
 app.use('/api', apiRoutes);
+console.log('API routes loaded successfully.');
 
 // --- Root Endpoint for Health Checks ---
 app.get('/', (req, res) => {

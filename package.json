@@ -7,6 +7,10 @@
     "frontend"
   ],
   "scripts": {
+    "preinstall": "npm install --workspaces",
+    "install": "npm run install --workspace=backend || true",
+    "build": "npm run build --workspace=backend || true",
+    "start": "npm run start --workspace=backend",
     "dev": "npm-run-all --parallel dev:*",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend"

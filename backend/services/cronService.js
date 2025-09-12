@@ -15,40 +15,75 @@ async function getOrCreateTeam(name) {
     return team;
 }
 
+// Helper to get the current season for OpenLigaDB (e.g., 2023 for 2023/2024 season)
+function getCurrentSeason() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    // Season usually starts around July/August
+    return month >= 7 ? year : year - 1;
+}
+
 async function fetchAndStoreMatches() {
     let newMatchesCount = 0;
+    let updatedMatchesCount = 0;
     let newHistoryCount = 0;
+    
+    // 1. Fetch live/upcoming matches from OpenLigaDB for the current season
+    const leagueShortcuts = ['bl1', 'bl2'];
+    const currentSeason = getCurrentSeason();
 
-    // 1. Fetch live/upcoming matches from OpenLigaDB (as soccersapi is not reliable)
-    // We will fetch from a couple of top leagues like Bundesliga
-    const leagueShortcuts = ['bl1', 'bl2']; 
     try {
         for (const league of leagueShortcuts) {
-            const openLigaRes = await axios.get(`https://api.openligadb.de/getmatchdata/${league}`);
+            const openLigaRes = await axios.get(`https://api.openligadb.de/getmatchdata/${league}/${currentSeason}`);
             const liveMatches = openLigaRes.data || [];
-            console.log(`CRON: Fetched ${liveMatches.length} matches for league ${league} from OpenLigaDB.`);
+            console.log(`CRON: Fetched ${liveMatches.length} matches for league ${league} for season ${currentSeason} from OpenLigaDB.`);
 
             for (const matchData of liveMatches) {
                 if (!matchData.matchID) continue;
+                
                 const externalId = `openliga-${matchData.matchID}`;
                 const existingMatch = await Match.findOne({ externalId });
-                if (existingMatch) continue;
 
                 const homeTeam = await getOrCreateTeam(matchData.team1.teamName);
                 const awayTeam = await getOrCreateTeam(matchData.team2.teamName);
 
                 if (!homeTeam || !awayTeam) continue;
 
-                await Match.create({
-                    source: 'openligadb',
-                    externalId: externalId,
-                    leagueCode: matchData.leagueName,
-                    matchDateUtc: new Date(matchData.matchDateTimeUTC),
-                    status: 'scheduled',
-                    homeTeam: homeTeam._id,
-                    awayTeam: awayTeam._id,
-                });
-                newMatchesCount++;
+                const matchDateTime = new Date(matchData.matchDateTimeUTC);
+                const lastUpdateDate = new Date(matchData.lastUpdateDateTimeUTC);
+
+                if (existingMatch) {
+                    // If match exists, check if it needs an update
+                    const existingLastUpdate = new Date(existingMatch.updatedAt);
+                    if (lastUpdateDate > existingLastUpdate) {
+                         await Match.updateOne({ _id: existingMatch._id }, {
+                            $set: {
+                                matchDateUtc: matchDateTime,
+                                status: matchData.matchIsFinished ? 'finished' : 'scheduled',
+                                homeGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam1,
+                                awayGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam2,
+                                updatedAt: lastUpdateDate
+                            }
+                        });
+                        updatedMatchesCount++;
+                    }
+                } else {
+                    // Create new match if it doesn't exist
+                    await Match.create({
+                        source: 'openligadb',
+                        externalId: externalId,
+                        leagueCode: matchData.leagueName,
+                        matchDateUtc: matchDateTime,
+                        status: matchData.matchIsFinished ? 'finished' : 'scheduled',
+                        homeTeam: homeTeam._id,
+                        awayTeam: awayTeam._id,
+                        homeGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam1,
+                        awayGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam2,
+                        updatedAt: lastUpdateDate,
+                    });
+                    newMatchesCount++;
+                }
             }
         }
     } catch (error) {
@@ -92,7 +127,7 @@ async function fetchAndStoreMatches() {
     }
 
 
-    return { newMatchesCount, newHistoryCount };
+    return { newMatchesCount, updatedMatchesCount, newHistoryCount };
 }
 
 async function generateAllPredictions() {
