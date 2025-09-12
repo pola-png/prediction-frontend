@@ -24,73 +24,140 @@ function getCurrentSeason() {
     return month >= 7 ? year : year - 1;
 }
 
+async function fetchFromSoccersAPI() {
+    let newMatchesCount = 0;
+    let updatedMatchesCount = 0;
+    const { SOCCERSAPI_USER, SOCCERSAPI_TOKEN } = process.env;
+    if (!SOCCERSAPI_USER || !SOCCERSAPI_TOKEN) {
+        throw new Error("SoccersAPI credentials not found in environment variables.");
+    }
+
+    // Fetch matches for today
+    const today = new Date().toISOString().split('T')[0];
+    const url = `https://www.soccersapi.com/v2.2/fixtures?user=${SOCCERSAPI_USER}&token=${SOCCERSAPI_TOKEN}&t=schedule&d=${today}`;
+    
+    const response = await axios.get(url);
+    const liveMatches = response.data.data || [];
+    console.log(`CRON: Fetched ${liveMatches.length} matches for ${today} from SoccersAPI.`);
+
+    for (const matchData of liveMatches) {
+        if (!matchData.id) continue;
+
+        const externalId = `soccersapi-${matchData.id}`;
+        const existingMatch = await Match.findOne({ externalId });
+
+        const homeTeam = await getOrCreateTeam(matchData.home_name);
+        const awayTeam = await getOrCreateTeam(matchData.away_name);
+
+        if (!homeTeam || !awayTeam) continue;
+
+        const matchDateTime = new Date(`${matchData.date} ${matchData.time}`);
+
+        if (existingMatch) {
+            // SoccersAPI does not provide a last updated timestamp, so updates are more complex.
+            // For now, we will skip if it exists. A more robust solution might compare fields.
+            continue; 
+        } else {
+            await Match.create({
+                source: 'soccersapi',
+                externalId: externalId,
+                leagueCode: matchData.league_name,
+                matchDateUtc: matchDateTime,
+                status: 'scheduled',
+                homeTeam: homeTeam._id,
+                awayTeam: awayTeam._id,
+            });
+            newMatchesCount++;
+        }
+    }
+    return { newMatchesCount, updatedMatchesCount };
+}
+
+async function fetchFromOpenLigaDB() {
+    let newMatchesCount = 0;
+    let updatedMatchesCount = 0;
+    const leagueShortcuts = ['bl1', 'bl2'];
+    const currentSeason = getCurrentSeason();
+
+    for (const league of leagueShortcuts) {
+        const openLigaRes = await axios.get(`https://api.openligadb.de/getmatchdata/${league}/${currentSeason}`);
+        const liveMatches = openLigaRes.data || [];
+        console.log(`CRON: Fetched ${liveMatches.length} matches for league ${league} for season ${currentSeason} from OpenLigaDB.`);
+
+        for (const matchData of liveMatches) {
+            if (!matchData.matchID) continue;
+            
+            const externalId = `openliga-${matchData.matchID}`;
+            const existingMatch = await Match.findOne({ externalId });
+
+            const homeTeam = await getOrCreateTeam(matchData.team1.teamName);
+            const awayTeam = await getOrCreateTeam(matchData.team2.teamName);
+
+            if (!homeTeam || !awayTeam) continue;
+
+            const matchDateTime = new Date(matchData.matchDateTimeUTC);
+            const lastUpdateDate = new Date(matchData.lastUpdateDateTimeUTC);
+
+            if (existingMatch) {
+                const existingLastUpdate = new Date(existingMatch.updatedAt);
+                if (lastUpdateDate > existingLastUpdate) {
+                     await Match.updateOne({ _id: existingMatch._id }, {
+                        $set: {
+                            matchDateUtc: matchDateTime,
+                            status: matchData.matchIsFinished ? 'finished' : 'scheduled',
+                            homeGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam1,
+                            awayGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam2,
+                            updatedAt: lastUpdateDate
+                        }
+                    });
+                    updatedMatchesCount++;
+                }
+            } else {
+                await Match.create({
+                    source: 'openligadb',
+                    externalId: externalId,
+                    leagueCode: matchData.leagueName,
+                    matchDateUtc: matchDateTime,
+                    status: matchData.matchIsFinished ? 'finished' : 'scheduled',
+                    homeTeam: homeTeam._id,
+                    awayTeam: awayTeam._id,
+                    homeGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam1,
+                    awayGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam2,
+                    updatedAt: lastUpdateDate,
+                });
+                newMatchesCount++;
+            }
+        }
+    }
+    return { newMatchesCount, updatedMatchesCount };
+}
+
+
 async function fetchAndStoreMatches() {
     let newMatchesCount = 0;
     let updatedMatchesCount = 0;
     let newHistoryCount = 0;
-    
-    // 1. Fetch live/upcoming matches from OpenLigaDB for the current season
-    const leagueShortcuts = ['bl1', 'bl2'];
-    const currentSeason = getCurrentSeason();
 
+    // 1. Try fetching from primary source: SoccersAPI
     try {
-        for (const league of leagueShortcuts) {
-            const openLigaRes = await axios.get(`https://api.openligadb.de/getmatchdata/${league}/${currentSeason}`);
-            const liveMatches = openLigaRes.data || [];
-            console.log(`CRON: Fetched ${liveMatches.length} matches for league ${league} for season ${currentSeason} from OpenLigaDB.`);
-
-            for (const matchData of liveMatches) {
-                if (!matchData.matchID) continue;
-                
-                const externalId = `openliga-${matchData.matchID}`;
-                const existingMatch = await Match.findOne({ externalId });
-
-                const homeTeam = await getOrCreateTeam(matchData.team1.teamName);
-                const awayTeam = await getOrCreateTeam(matchData.team2.teamName);
-
-                if (!homeTeam || !awayTeam) continue;
-
-                const matchDateTime = new Date(matchData.matchDateTimeUTC);
-                const lastUpdateDate = new Date(matchData.lastUpdateDateTimeUTC);
-
-                if (existingMatch) {
-                    // If match exists, check if it needs an update
-                    const existingLastUpdate = new Date(existingMatch.updatedAt);
-                    if (lastUpdateDate > existingLastUpdate) {
-                         await Match.updateOne({ _id: existingMatch._id }, {
-                            $set: {
-                                matchDateUtc: matchDateTime,
-                                status: matchData.matchIsFinished ? 'finished' : 'scheduled',
-                                homeGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam1,
-                                awayGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam2,
-                                updatedAt: lastUpdateDate
-                            }
-                        });
-                        updatedMatchesCount++;
-                    }
-                } else {
-                    // Create new match if it doesn't exist
-                    await Match.create({
-                        source: 'openligadb',
-                        externalId: externalId,
-                        leagueCode: matchData.leagueName,
-                        matchDateUtc: matchDateTime,
-                        status: matchData.matchIsFinished ? 'finished' : 'scheduled',
-                        homeTeam: homeTeam._id,
-                        awayTeam: awayTeam._id,
-                        homeGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam1,
-                        awayGoals: matchData.matchResults.find(r => r.resultName === 'Endergebnis')?.pointsTeam2,
-                        updatedAt: lastUpdateDate,
-                    });
-                    newMatchesCount++;
-                }
-            }
-        }
+        console.log("CRON: Attempting to fetch from primary source: SoccersAPI");
+        const soccersApiResult = await fetchFromSoccersAPI();
+        newMatchesCount += soccersApiResult.newMatchesCount;
+        updatedMatchesCount += soccersApiResult.updatedMatchesCount;
     } catch (error) {
-        console.error("CRON: Error fetching from OpenLigaDB:", error.message);
+        console.error("CRON: Primary source SoccersAPI failed:", error.message);
+        console.log("CRON: Falling back to secondary source: OpenLigaDB");
+        // 2. Fallback to OpenLigaDB
+        try {
+            const openLigaResult = await fetchFromOpenLigaDB();
+            newMatchesCount += openLigaResult.newMatchesCount;
+            updatedMatchesCount += openLigaResult.updatedMatchesCount;
+        } catch (fallbackError) {
+            console.error("CRON: Fallback source OpenLigaDB also failed:", fallbackError.message);
+        }
     }
 
-    // 2. Fetch historical matches from football.json
+    // 3. Fetch historical matches from football.json
     if (process.env.FOOTBALL_JSON_URL) {
         try {
             const fallbackRes = await axios.get(process.env.FOOTBALL_JSON_URL);
@@ -154,7 +221,7 @@ async function generateAllPredictions() {
                 outcomes: predictionResult,
                 confidence: predictionResult.confidence,
                 bucket: predictionResult.bucket,
-                version: '1.1-monorepo'
+                version: '1.2-soccersapi'
             });
             await predictionDoc.save();
 
@@ -174,7 +241,7 @@ async function fetchAndStoreResults() {
     const matchesToCheck = await Match.find({
         status: 'scheduled',
         matchDateUtc: { $lt: new Date() },
-        source: 'openligadb'
+        source: 'openligadb' // Only check for results from OpenLigaDB for now
     });
 
     if(matchesToCheck.length === 0) {
