@@ -119,10 +119,10 @@ exports.runFetchMatches = [
   async (req, res) => {
     console.log('CRON: Triggered job: fetch-matches');
 
-    // ✅ Respond immediately
+    // Respond immediately
     res.status(202).json({ success: true, message: 'fetch-matches job started' });
 
-    // 🔄 Run in background
+    // Run in background
     fetchAndStoreMatches()
       .then(result => {
         console.log(
