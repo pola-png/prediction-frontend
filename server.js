@@ -35,7 +35,7 @@ app.use('/api', apiRoutes);
 
 // --- Root Endpoint for Health Checks ---
 app.get('/', (req, res) => {
-  res.send('GoalGazer Backend is running!');
+  res.status(200).send('GoalGazer Backend is running!');
 });
 
 // --- Start Server ---
