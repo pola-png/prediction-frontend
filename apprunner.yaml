@@ -8,8 +8,6 @@ build:
 
 run:
   command: node server.js
-  network:
-    port: 8080
   env:
     - name: ADMIN_TOKEN
       value: "866ce419205a21ad30324a351b4d425c"
