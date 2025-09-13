@@ -10,12 +10,12 @@ run:
   command: node server.js
   network:
     port: 8080
-  health-check:
+  healthCheck:
     path: /
     interval: 20
     timeout: 15
-    healthy-threshold: 2
-    unhealthy-threshold: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 5
   env:
     - name: ADMIN_TOKEN
       value: "866ce419205a21ad30324a351b4d425c"
