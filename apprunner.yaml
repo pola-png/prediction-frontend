@@ -1,12 +1,41 @@
 version: 1.0
 runtime: "NODEJS_18_LTS"
+
+# Build configuration
 build:
   workingDirectory: "/backend"
   commands:
     - npm install
     - npm run build
+
+# Start backend server
 startCommand: npm run start
+
+# Port your app listens on
 port: 8080
+
+# Instance configuration
+instanceConfiguration:
+  cpu: 1024         # 1 vCPU
+  memory: 4096      # 4 GB RAM
+
+# Auto scaling configuration
+autoScalingConfiguration:
+  minConcurrency: 1           # minimum number of requests handled concurrently
+  maxConcurrency: 50          # maximum requests handled concurrently
+  minSize: 1                  # minimum number of instances
+  maxSize: 4                  # maximum number of instances
+
+# Health check configuration
+healthCheck:
+  protocol: HTTP
+  path: "/"                   # health check endpoint
+  interval: 10                # seconds between checks
+  timeout: 5                  # seconds to wait for response
+  healthyThreshold: 1
+  unhealthyThreshold: 5
+
+# Environment variables
 environment:
   variables:
     ADMIN_TOKEN: "866ce419205a21ad30324a351b4d425c"
