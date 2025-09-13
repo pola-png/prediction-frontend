@@ -1,5 +1,5 @@
 version: 1.0
-runtime: "NODEJS_16_LTS"
+runtime: nodejs22
 
 # Build configuration
 build:
