@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const dataController = require('./dataController');
+const dataController = require('../controllers/dataController');
 
 // --- Frontend Data Routes ---
 router.get('/dashboard', dataController.getDashboardData);

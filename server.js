@@ -11,18 +11,15 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
-// --- Database Connection (non-blocking startup) ---
+// --- Database Connection (non-blocking) ---
 const MONGO_URI = process.env.MONGO_URI;
 if (MONGO_URI) {
   mongoose.connect(MONGO_URI)
     .then(() => console.log('DB: Successfully connected to MongoDB.'))
-    .catch(err => {
-      console.error('DB: Initial connection failed.', err);
-      // Don't crash the app, retry or continue running
-    });
+    .catch(err => console.error('DB: Initial connection failed.', err));
 
-  mongoose.connection.on('error', (err) => {
-    console.error('❌ DB: MongoDB runtime error:', err);
+  mongoose.connection.on('error', err => {
+    console.error('DB: MongoDB runtime error:', err);
   });
 } else {
   console.warn('Warning: MONGO_URI is not defined. Skipping DB connection.');
@@ -43,6 +40,6 @@ app.get('/', (req, res) => {
 
 // --- Start Server ---
 app.listen(PORT, () => {
-  console.log(`SERVER: Running on port ${PORT}`);
-  console.log(`Health check endpoints: / and /healthz`);
+  console.log(`🚀 SERVER: Running on port ${PORT}`);
+  console.log(`✅ Health check endpoints available at "/" and "/healthz"`);
 });
