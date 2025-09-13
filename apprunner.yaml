@@ -2,19 +2,34 @@ version: 1.0
 runtime: nodejs22
 
 build:
-  commands: "cd backend && npm install && npm run build"
+  commands:
+    build:
+      - npm install
+      - npm run build
 
-startCommand: "cd backend && npm run start"
+start:
+  command: npm start
+  network:
+    port: 4000
 
-port: 8080
+instance:
+  cpu: 1024
+  memory: 4096
 
-instanceConfiguration:
-  cpu: 1024      # 1 vCPU
-  memory: 4096   # 4 GB RAM
+autoScaling:
+  minSize: 1
+  maxSize: 5
 
-autoScalingConfiguration:
-  minConcurrency: 1
-  maxConcurrency: 50
+healthCheck:
+  path: /
+  interval: 20
+  timeout: 10
+  healthyThreshold: 2
+  unhealthyThreshold: 3
+
+observability:
+  traceConfiguration:
+    vendor: AWSXRAY
 
 environment:
   variables:
