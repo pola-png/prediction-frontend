@@ -6,7 +6,7 @@ build:
     build:
       - npm install
 
-start:
+run:
   command: node server.js
   network:
     port: 4000
@@ -37,7 +37,7 @@ environment:
     CRON_TOKEN: "supersecret123"
     ENABLE_LIVE_UPDATES: "true"
     FOOTBALL_JSON_URL: "https://raw.githubusercontent.com/openfootball/football.json/master/2024-25/en.1.json"
-    GEMINI_API_KEY: "YOUR_GEMINI_API_KEY"
+    GEMINI_API_KEY: "AIzaSyDhUKqUxyhdR5FaS_mZ7_yIegSNbK0zO88"
     MONGO_URI: "mongodb+srv://polamedian:Olami172@cluster0.mn13hxj.mongodb.net/predictionDB?retryWrites=true&w=majority&appName=Cluster0"
     NODE_ENV: "production"
     SOCCERSAPI_TOKEN: "7d2a020d22103366a2a4195584731393"
