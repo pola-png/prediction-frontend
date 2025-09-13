@@ -1,10 +1,11 @@
 version: 1.0
 runtime: "NODEJS_18_LTS"
 build:
+  workingDirectory: "/backend"
   commands:
-    - npm install --workspaces
-    - npm run build --workspace=backend
-startCommand: npm run start --workspace=backend
+    - npm install
+    - npm run build
+startCommand: npm run start
 port: 8080
 environment:
   variables:
