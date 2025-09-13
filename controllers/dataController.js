@@ -128,7 +128,7 @@ exports.runFetchMatches = [checkCronToken, async (req, res) => {
 exports.runGeneratePredictions = [checkCronToken, async (req, res) => {
     try {
         console.log('CRON: Triggered job: generate-predictions');
-        const result = await generateAllpredictions();
+        const result = await generateAllPredictions();
         console.log(`CRON: Job 'generate-predictions' complete. Processed: ${result.processedCount}`);
         res.status(200).json({ success: true, ...result });
     } catch (error) {
