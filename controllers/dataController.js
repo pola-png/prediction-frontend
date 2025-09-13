@@ -94,7 +94,8 @@ exports.getMatchSummary = async (req, res) => {
 
         const summary = await getSummaryFromAI(match);
         res.json({ summary });
-    } catch (error) {
+    } catch (error)
+        {
         console.error("API: Failed to fetch match summary", error);
         res.status(500).json({ error: `Could not load AI summary. ${error.message}` });
     }
@@ -104,35 +105,66 @@ exports.getMatchSummary = async (req, res) => {
 // --- CRON JOB CONTROLLERS ---
 
 const checkCronToken = (req, res, next) => {
-    const token = req.query.token || req.headers['authorization'];
-    const cronToken = `Bearer ${process.env.CRON_TOKEN}`;
-    
-    if (!token || token !== cronToken) {
-        return res.status(403).json({ error: 'Unauthorized' });
-    }
-    next();
+  const token = req.query.token || req.headers['authorization'];
+  const cronToken = `Bearer ${process.env.CRON_TOKEN}`;
+
+  if (!token || token !== cronToken) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  next();
 };
 
-const runInBackground = (res, jobName, jobFunction) => {
-  res.status(202).json({ message: `Accepted: Job '${jobName}' started in the background.` });
-  console.log(`CRON: Triggered job: ${jobName}`);
-  jobFunction()
-    .then(result => {
-        console.log(`CRON: Job '${jobName}' completed successfully.`, result);
-    })
-    .catch(error => {
-        console.error(`CRON: Job '${jobName}' failed:`, error);
-    });
-};
+exports.runFetchMatches = [
+  checkCronToken,
+  async (req, res) => {
+    console.log('CRON: Triggered job: fetch-matches');
 
-exports.runFetchMatches = [checkCronToken, (req, res) => {
-    runInBackground(res, 'fetch-matches', fetchAndStoreMatches);
-}];
+    // ✅ Respond immediately
+    res.status(202).json({ success: true, message: 'fetch-matches job started' });
 
-exports.runGeneratePredictions = [checkCronToken, (req, res) => {
-    runInBackground(res, 'generate-predictions', generateAllPredictions);
-}];
+    // 🔄 Run in background
+    fetchAndStoreMatches()
+      .then(result => {
+        console.log(
+          `CRON: Job 'fetch-matches' complete. New: ${result.newMatchesCount}, History: ${result.newHistoryCount}`
+        );
+      })
+      .catch(error => {
+        console.error("CRON: Job 'fetch-matches' failed:", error);
+      });
+  },
+];
 
-exports.runFetchResults = [checkCronToken, (req, res) => {
-    runInBackground(res, 'fetch-results', fetchAndStoreResults);
-}];
+exports.runGeneratePredictions = [
+  checkCronToken,
+  async (req, res) => {
+    console.log('CRON: Triggered job: generate-predictions');
+
+    res.status(202).json({ success: true, message: 'generate-predictions job started' });
+
+    generateAllPredictions()
+      .then(result => {
+        console.log(`CRON: Job 'generate-predictions' complete. Processed: ${result.processedCount}`);
+      })
+      .catch(error => {
+        console.error("CRON: Job 'generate-predictions' failed:", error);
+      });
+  },
+];
+
+exports.runFetchResults = [
+  checkCronToken,
+  async (req, res) => {
+    console.log('CRON: Triggered job: fetch-results');
+
+    res.status(202).json({ success: true, message: 'fetch-results job started' });
+
+    fetchAndStoreResults()
+      .then(result => {
+        console.log(`CRON: Job 'fetch-results' complete. Updated: ${result.updatedCount}`);
+      })
+      .catch(error => {
+        console.error("CRON: Job 'fetch-results' failed:", error);
+      });
+  },
+];
