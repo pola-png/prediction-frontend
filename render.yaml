@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: goalgazer-backend
+    env: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    envVars:
+      - key: MONGO_URI
+        value: "mongodb+srv://polamedian:Olami172@cluster0.mn13hxj.mongodb.net/predictionDB?retryWrites=true&w=majority&appName=Cluster0"
+      - key: GEMINI_API_KEY
+        value: "AIzaSyDhUKqUxyhdR5FaS_mZ7_yIegSNbK0zO88"
+      - key: SOCCERSAPI_USER
+        value: "polamedian"
+      - key: SOCCERSAPI_TOKEN
+        value: "7d2a020d22103366a2a4195584731393"
+      - key: CRON_TOKEN
+        value: "supersecret123"
+      - key: FOOTBALL_JSON_URL
+        value: "https://raw.githubusercontent.com/openfootball/football.json/master/2024-25/en.1.json"
+      - key: NODE_ENV
+        value: "production"
