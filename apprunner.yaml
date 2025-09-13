@@ -2,12 +2,9 @@ version: 1.0
 runtime: nodejs22
 
 build:
-  commands:
-    - cd backend
-    - npm install
-    - npm run build
+  commands: "cd backend && npm install && npm run build"
 
-startCommand: cd backend && npm run start
+startCommand: "cd backend && npm run start"
 
 port: 8080
 
