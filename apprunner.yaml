@@ -10,12 +10,6 @@ run:
   command: node server.js
   network:
     port: 8080
-  healthCheck:
-    path: /
-    interval: 20
-    timeout: 15
-    healthyThreshold: 2
-    unhealthyThreshold: 5
   env:
     - name: ADMIN_TOKEN
       value: "866ce419205a21ad30324a351b4d425c"
@@ -39,3 +33,10 @@ run:
       value: "polamedian"
     - name: SOCCERS_API_KEY
       value: "7d2a020d22103366a2a4195584731393"
+
+healthCheck:
+  path: /
+  interval: 20
+  timeout: 15
+  healthyThreshold: 2
+  unhealthyThreshold: 5
