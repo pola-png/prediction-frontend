@@ -1,11 +1,11 @@
 services:
   - type: web
-    name: goalgazer-frontend
+    name: goalgazer-backend
     env: node
     plan: free
-    rootDir: frontend
-    buildCommand: "npm install && npm run build"
-    startCommand: "npm start"
+    buildCommand: "npm install"
+    startCommand: "node server.js"
     envVars:
       - key: NODE_ENV
         value: "production"
+      - fromGroup: goalgazer-secrets
