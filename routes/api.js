@@ -10,9 +10,9 @@ router.get('/summary/:matchId', dataController.getMatchSummary);
 
 // --- Cron Job Triggers ---
 // NOTE: For external cron services, use 'Authorization: Bearer <token>' header
-router.post('/cron/fetch-matches', dataController.runFetchMatches);
-router.post('/cron/generate-predictions', dataController.runGeneratePredictions);
-router.post('/cron/fetch-results', dataController.runFetchResults);
+router.get('/cron/fetch-matches', dataController.runFetchMatches);
+router.get('/cron/generate-predictions', dataController.runGeneratePredictions);
+router.get('/cron/fetch-results', dataController.runFetchResults);
 
 
 module.exports = router;
