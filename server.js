@@ -19,23 +19,19 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-mongoose.connect(MONGO_URI, {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-  socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-})
-.then(() => console.log('Successfully connected to MongoDB.'))
+mongoose.connect(MONGO_URI)
+.then(() => console.log('DB: Successfully connected to MongoDB.'))
 .catch(err => {
   console.error('FATAL ERROR: Database connection failed.', err);
   process.exit(1);
 });
 
 mongoose.connection.on('error', err => {
-  console.error('MongoDB runtime error:', err);
+  console.error('DB: MongoDB runtime error:', err);
 });
 
 // --- API Routes ---
 app.use('/api', apiRoutes);
-console.log('API routes loaded successfully.');
 
 // --- Root Endpoint for Health Checks ---
 app.get('/', (req, res) => {
@@ -44,5 +40,5 @@ app.get('/', (req, res) => {
 
 // --- Start Server ---
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`SERVER: Running on port ${PORT}`);
 });

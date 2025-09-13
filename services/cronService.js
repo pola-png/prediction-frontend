@@ -43,7 +43,6 @@ async function fetchFromSoccersAPI() {
         const externalId = `soccersapi-${matchData.id}`;
         const existingMatch = await Match.findOne({ externalId });
 
-        // For SoccersAPI, we primarily insert new matches. Updates are less frequent for scheduled data.
         if (existingMatch) {
             continue; 
         }
@@ -89,7 +88,6 @@ async function fetchFromOpenLigaDB() {
             
             const lastUpdateDate = new Date(matchData.lastUpdateDateTimeUTC);
 
-            // If match exists, check if it needs an update
             if (existingMatch) {
                 const existingLastUpdate = new Date(existingMatch.updatedAt);
                 if (lastUpdateDate > existingLastUpdate) {
@@ -106,10 +104,9 @@ async function fetchFromOpenLigaDB() {
                     });
                     updatedMatchesCount++;
                 }
-                continue; // Move to next match
+                continue;
             }
 
-            // If match does not exist, create it
             const homeTeam = await getOrCreateTeam(matchData.team1.teamName);
             const awayTeam = await getOrCreateTeam(matchData.team2.teamName);
             if (!homeTeam || !awayTeam) continue;
@@ -142,15 +139,13 @@ async function fetchAndStoreMatches() {
     let updatedMatchesCount = 0;
     let newHistoryCount = 0;
 
-    // 1. Try fetching from primary source: SoccersAPI
     try {
-        console.log("CRON: Attempting to fetch from primary source: SoccersAPI");
+        console.log("CRON: Attempting primary source: SoccersAPI");
         const soccersApiResult = await fetchFromSoccersAPI();
         newMatchesCount += soccersApiResult.newMatchesCount;
     } catch (error) {
         console.error("CRON: Primary source SoccersAPI failed:", error.message);
         console.log("CRON: Falling back to secondary source: OpenLigaDB");
-        // 2. Fallback to OpenLigaDB
         try {
             const openLigaResult = await fetchFromOpenLigaDB();
             newMatchesCount += openLigaResult.newMatchesCount;
@@ -160,7 +155,6 @@ async function fetchAndStoreMatches() {
         }
     }
 
-    // 3. Fetch historical matches from football.json (if configured)
     if (process.env.FOOTBALL_JSON_URL) {
         try {
             console.log("CRON: Fetching historical matches from football.json");
@@ -202,19 +196,18 @@ async function fetchAndStoreMatches() {
 
 async function generateAllPredictions() {
     let processedCount = 0;
-    // Find upcoming matches that don't have a prediction yet
     const upcomingMatches = await Match.find({
         status: { $in: ['scheduled', 'upcoming', 'tba'] },
         matchDateUtc: { $gte: new Date() },
         prediction: { $exists: false }
-    }).populate('homeTeam awayTeam').limit(10).lean(); // Limit to 10 per run to avoid hitting API rate limits
+    }).populate('homeTeam awayTeam').limit(10).lean();
     
     if (upcomingMatches.length === 0) {
-        console.log("CRON: No new matches require predictions at this time.");
+        console.log("CRON: No new matches require predictions.");
         return { processedCount: 0 };
     }
     
-    console.log(`CRON: Found ${upcomingMatches.length} matches to generate predictions for.`);
+    console.log(`CRON: Found ${upcomingMatches.length} matches for prediction generation.`);
     const historicalMatches = await Match.find({ status: 'finished' }).populate('homeTeam awayTeam').lean();
 
     for (const match of upcomingMatches) {
@@ -237,7 +230,7 @@ async function generateAllPredictions() {
 
             await Match.updateOne({ _id: match._id }, { $set: { prediction: predictionDoc._id } });
             processedCount++;
-            console.log(`CRON: Successfully generated prediction for ${match.homeTeam.name} vs ${match.awayTeam.name}`);
+            console.log(`CRON: Generated prediction for ${match.homeTeam.name} vs ${match.awayTeam.name}`);
         } catch (error) {
             console.error(`CRON: Failed to generate prediction for match ${match._id} (${match.homeTeam?.name} vs ${match.awayTeam?.name}):`, error.message);
         }
@@ -247,7 +240,6 @@ async function generateAllPredictions() {
 
 async function fetchAndStoreResults() {
     let updatedCount = 0;
-    // Find matches from OpenLigaDB that are scheduled but their start time is in the past
     const matchesToCheck = await Match.find({
         status: 'scheduled',
         matchDateUtc: { $lt: new Date() },

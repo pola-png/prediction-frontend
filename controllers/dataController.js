@@ -39,7 +39,7 @@ exports.getDashboardData = async (req, res) => {
 
         res.json({ upcomingMatches, recentResults, bucketCounts });
     } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("API: Error fetching dashboard data:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
@@ -60,7 +60,7 @@ exports.getPredictionsByBucket = async (req, res) => {
         const filteredMatches = matches.filter(m => m.prediction);
         res.json(filteredMatches);
     } catch (error) {
-        console.error(`Error fetching predictions for bucket ${req.params.bucket}:`, error);
+        console.error(`API: Error fetching predictions for bucket ${req.params.bucket}:`, error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
@@ -74,7 +74,7 @@ exports.getRecentResults = async (req, res) => {
             .lean();
         res.json(matches);
     } catch (error) {
-        console.error("Error fetching recent results:", error);
+        console.error("API: Error fetching recent results:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
@@ -96,7 +96,7 @@ exports.getMatchSummary = async (req, res) => {
         const summary = await getSummaryFromAI(match);
         res.json({ summary });
     } catch (error) {
-        console.error("Failed to fetch match summary", error);
+        console.error("API: Failed to fetch match summary", error);
         res.status(500).json({ error: `Could not load AI summary. ${error.message}` });
     }
 };
@@ -116,37 +116,37 @@ const checkCronToken = (req, res, next) => {
 
 exports.runFetchMatches = [checkCronToken, async (req, res) => {
     try {
-        console.log('CRON: Fetching new matches...');
+        console.log('CRON: Triggered job: fetch-matches');
         const result = await fetchAndStoreMatches();
-        console.log(`CRON: Fetching complete. New: ${result.newMatchesCount}, History: ${result.newHistoryCount}`);
+        console.log(`CRON: Job 'fetch-matches' complete. New: ${result.newMatchesCount}, History: ${result.newHistoryCount}`);
         res.status(200).json({ success: true, ...result });
     } catch (error) {
-        console.error("CRON 'fetch-matches' failed:", error);
+        console.error("CRON: Job 'fetch-matches' failed:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 }];
 
 exports.runGeneratePredictions = [checkCronToken, async (req, res) => {
     try {
-        console.log('CRON: Generating new predictions...');
+        console.log('CRON: Triggered job: generate-predictions');
         const result = await generateAllPredictions();
-        console.log(`CRON: Prediction generation complete. Processed: ${result.processedCount}`);
+        console.log(`CRON: Job 'generate-predictions' complete. Processed: ${result.processedCount}`);
         res.status(200).json({ success: true, ...result });
     } catch (error) {
-        console.error("CRON 'generate-predictions' failed:", error);
+        console.error("CRON: Job 'generate-predictions' failed:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 }];
 
 exports.runFetchResults = [checkCronToken, async (req, res) => {
     try {
-        console.log('CRON: Fetching match results...');
+        console.log('CRON: Triggered job: fetch-results');
         const result = await fetchAndStoreResults();
-        console.log(`CRON: Results fetching complete. Updated: ${result.updatedCount}`);
+        console.log(`CRON: Job 'fetch-results' complete. Updated: ${result.updatedCount}`);
         res.status(200).json({ success: true, ...result });
     } catch (error)
  {
-        console.error("CRON 'fetch-results' failed:", error);
+        console.error("CRON: Job 'fetch-results' failed:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 }];

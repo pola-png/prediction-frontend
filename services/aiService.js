@@ -3,7 +3,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { z } = require("zod");
 
 if (!process.env.GEMINI_API_KEY) {
-  console.warn('GEMINI_API_KEY environment variable not set. AI features will be disabled.');
+  console.warn('AI: GEMINI_API_KEY environment variable not set. AI features will be disabled.');
 }
 const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
@@ -23,7 +23,6 @@ async function callGenerativeAI(prompt, outputSchema) {
     if (!genAI) throw new Error("Generative AI is not initialized. Check GEMINI_API_KEY.");
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-preview" });
     
-    // Adding retry logic with exponential backoff
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
         try {
@@ -37,13 +36,13 @@ async function callGenerativeAI(prompt, outputSchema) {
 
             const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
             const parsed = JSON.parse(jsonString);
-            return outputSchema.parse(parsed); // Validate with Zod
+            return outputSchema.parse(parsed);
         } catch(error) {
-            console.error(`AI call attempt ${i + 1} of ${maxRetries} failed. Error: ${error.message}`);
+            console.error(`AI: Call attempt ${i + 1} of ${maxRetries} failed. Error: ${error.message}`);
             if (i === maxRetries - 1) {
-                throw new Error(`AI call failed after ${maxRetries} attempts: ${error.message}`);
+                throw new Error(`AI: Call failed after ${maxRetries} attempts: ${error.message}`);
             }
-            await new Promise(res => setTimeout(res, 1000 * Math.pow(2, i))); // wait 1s, 2s, 4s...
+            await new Promise(res => setTimeout(res, 1000 * Math.pow(2, i)));
         }
     }
 }
