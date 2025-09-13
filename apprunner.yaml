@@ -10,27 +10,6 @@ run:
   command: node server.js
   network:
     port: 4000
-
-instance:
-  cpu: 1024
-  memory: 4096
-
-autoScaling:
-  minSize: 1
-  maxSize: 5
-
-healthCheck:
-  path: /
-  interval: 20
-  timeout: 10
-  healthyThreshold: 2
-  unhealthyThreshold: 3
-
-observability:
-  traceConfiguration:
-    vendor: AWSXRAY
-
-environment:
   variables:
     ADMIN_TOKEN: "866ce419205a21ad30324a351b4d425c"
     API_SECRET: "866ce419205a21ad30324a351b4d425c"
