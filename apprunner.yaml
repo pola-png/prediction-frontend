@@ -1,0 +1,31 @@
+version: 1.0
+runtime: nodejs22
+
+build:
+  commands: "cd backend && npm install && npm run build"
+
+startCommand: "cd backend && npm run start"
+
+port: 8080
+
+instanceConfiguration:
+  cpu: 1024      # 1 vCPU
+  memory: 4096   # 4 GB RAM
+
+autoScalingConfiguration:
+  minConcurrency: 1
+  maxConcurrency: 50
+
+environment:
+  variables:
+    ADMIN_TOKEN: "866ce419205a21ad30324a351b4d425c"
+    API_SECRET: "866ce419205a21ad30324a351b4d425c"
+    CRON_TOKEN: "supersecret123"
+    ENABLE_LIVE_UPDATES: "true"
+    FOOTBALL_JSON_URL: "https://raw.githubusercontent.com/openfootball/football.json/master/2024-25/en.1.json"
+    GEMINI_API_KEY: "AIzaSyDhUKqUxyhdR5FaS_mZ7_yIegSNbK0z88"
+    MONGO_URI: "mongodb+srv://polamedian:Olami172@cluster0.mn13hxj.mongodb.net/predictionDB?retryWrites=true&w=majority&appName=Cluster0"
+    NODE_ENV: "production"
+    SOCCERSAPI_TOKEN: "7d2a020d22103366a2a4195584731393"
+    SOCCERSAPI_USER: "polamedian"
+    SOCCERS_API_KEY: "7d2a020d22103366a2a4195584731393"
