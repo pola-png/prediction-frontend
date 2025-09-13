@@ -1,7 +1,6 @@
-
 const express = require('express');
 const router = express.Router();
-const dataController = require('../controllers/dataController');
+const dataController = require('./controllers/dataController');
 
 // --- Frontend Data Routes ---
 router.get('/dashboard', dataController.getDashboardData);
@@ -13,7 +12,7 @@ router.get('/summary/:matchId', dataController.getMatchSummary);
 // NOTE: For external cron services, use 'Authorization: Bearer <token>' header
 router.post('/cron/fetch-matches', dataController.runFetchMatches);
 router.post('/cron/generate-predictions', dataController.runGeneratePredictions);
-router.post('/cron/fetch-results', data.runFetchResults);
+router.post('/cron/fetch-results', dataController.runFetchResults);
 
 
 module.exports = router;

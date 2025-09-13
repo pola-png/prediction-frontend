@@ -24,6 +24,8 @@ if (MONGO_URI) {
   mongoose.connection.on('error', (err) => {
     console.error('❌ DB: MongoDB runtime error:', err);
   });
+} else {
+  console.warn('Warning: MONGO_URI is not defined. Skipping DB connection.');
 }
 
 // --- API Routes ---
