@@ -23,8 +23,9 @@ async function callGenerativeAI(prompt, outputSchema) {
     if (!genAI) throw new Error("Generative AI is not initialized. Check GEMINI_API_KEY.");
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-preview" });
     
-    // Adding retry logic
-    for (let i = 0; i < 3; i++) {
+    // Adding retry logic with exponential backoff
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
         try {
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -38,9 +39,11 @@ async function callGenerativeAI(prompt, outputSchema) {
             const parsed = JSON.parse(jsonString);
             return outputSchema.parse(parsed); // Validate with Zod
         } catch(error) {
-            console.error(`AI call attempt ${i+1} failed.`, error.message);
-            if (i === 2) throw error; // Rethrow after last attempt
-            await new Promise(res => setTimeout(res, 1000 * (i + 1))); // wait before retrying
+            console.error(`AI call attempt ${i + 1} of ${maxRetries} failed. Error: ${error.message}`);
+            if (i === maxRetries - 1) {
+                throw new Error(`AI call failed after ${maxRetries} attempts: ${error.message}`);
+            }
+            await new Promise(res => setTimeout(res, 1000 * Math.pow(2, i))); // wait 1s, 2s, 4s...
         }
     }
 }
