@@ -1,9 +1,9 @@
 
-const Match = require('../models/Match');
-const Team = require('../models/Team');
-const Prediction = require('../models/Prediction');
-const { fetchAndStoreMatches, generateAllPredictions, fetchAndStoreResults } = require('../services/cronService');
-const { getSummaryFromAI } = require('../services/aiService');
+const Match = require('./models/Match');
+const Team = require('./models/Team');
+const Prediction = require('./models/Prediction');
+const { fetchAndStoreMatches, generateAllPredictions, fetchAndStoreResults } = require('./services/cronService');
+const { getSummaryFromAI } = require('./services/aiService');
 
 
 // --- Frontend API Methods ---
