@@ -11,13 +11,14 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
-// --- Database Connection ---
+// --- Database Connection (non-blocking startup) ---
 const MONGO_URI = process.env.MONGO_URI;
 if (MONGO_URI) {
   mongoose.connect(MONGO_URI)
     .then(() => console.log('DB: Successfully connected to MongoDB.'))
     .catch(err => {
       console.error('DB: Initial connection failed.', err);
+      // Don't crash the app, retry or continue running
     });
 
   mongoose.connection.on('error', err => {
@@ -35,7 +36,7 @@ app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// --- Root Endpoint ---
+// --- Root Endpoint (fallback for health check) ---
 app.get('/', (req, res) => {
   res.status(200).send('GoalGazer Backend is running!');
 });
@@ -43,4 +44,5 @@ app.get('/', (req, res) => {
 // --- Start Server ---
 app.listen(PORT, () => {
   console.log(`SERVER: Running on port ${PORT}`);
+  console.log(`Health check endpoints: / and /healthz`);
 });
