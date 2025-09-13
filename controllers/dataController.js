@@ -113,39 +113,26 @@ const checkCronToken = (req, res, next) => {
     next();
 };
 
-exports.runFetchMatches = [checkCronToken, async (req, res) => {
-    try {
-        console.log('CRON: Triggered job: fetch-matches');
-        const result = await fetchAndStoreMatches();
-        console.log(`CRON: Job 'fetch-matches' complete. New: ${result.newMatchesCount}, History: ${result.newHistoryCount}`);
-        res.status(200).json({ success: true, ...result });
-    } catch (error) {
-        console.error("CRON: Job 'fetch-matches' failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-    }
+const runInBackground = (res, jobName, jobFunction) => {
+  res.status(202).json({ message: `Accepted: Job '${jobName}' started in the background.` });
+  console.log(`CRON: Triggered job: ${jobName}`);
+  jobFunction()
+    .then(result => {
+        console.log(`CRON: Job '${jobName}' completed successfully.`, result);
+    })
+    .catch(error => {
+        console.error(`CRON: Job '${jobName}' failed:`, error);
+    });
+};
+
+exports.runFetchMatches = [checkCronToken, (req, res) => {
+    runInBackground(res, 'fetch-matches', fetchAndStoreMatches);
 }];
 
-exports.runGeneratePredictions = [checkCronToken, async (req, res) => {
-    try {
-        console.log('CRON: Triggered job: generate-predictions');
-        const result = await generateAllPredictions();
-        console.log(`CRON: Job 'generate-predictions' complete. Processed: ${result.processedCount}`);
-        res.status(200).json({ success: true, ...result });
-    } catch (error) {
-        console.error("CRON: Job 'generate-predictions' failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-    }
+exports.runGeneratePredictions = [checkCronToken, (req, res) => {
+    runInBackground(res, 'generate-predictions', generateAllPredictions);
 }];
 
-exports.runFetchResults = [checkCronToken, async (req, res) => {
-    try {
-        console.log('CRON: Triggered job: fetch-results');
-        const result = await fetchAndStoreResults();
-        console.log(`CRON: Job 'fetch-results' complete. Updated: ${result.updatedCount}`);
-        res.status(200).json({ success: true, ...result });
-    } catch (error)
- {
-        console.error("CRON: Job 'fetch-results' failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-    }
+exports.runFetchResults = [checkCronToken, (req, res) => {
+    runInBackground(res, 'fetch-results', fetchAndStoreResults);
 }];
